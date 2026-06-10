@@ -18,6 +18,29 @@
   --shadow-green: 0 0 10px rgba(57, 255, 20, 0.5);
 }
 
+/* Light theme — overrides the shared variables; cascades to the menu and
+   every game cabinet automatically. Accents are darkened and glows softened
+   so the neon palette stays readable on a light background. */
+[data-theme="light"] {
+  --bg-primary: #e6e7ef;
+  --bg-secondary: #f3f4fa;
+  --bg-card: #ffffff;
+  --border-color: #b9bcd0;
+  --text-primary: #14141f;
+  --text-secondary: #5c5f76;
+
+  --accent-yellow: #c69200;
+  --accent-blue:   #0090b3;
+  --accent-pink:   #d6006a;
+  --accent-red:    #d63100;
+  --accent-green:  #1f9e2f;
+  --accent-orange: #c66b00;
+
+  --shadow-blue:   0 0 8px rgba(0, 144, 179, 0.35);
+  --shadow-yellow: 0 0 8px rgba(198, 146, 0, 0.30);
+  --shadow-green:  0 0 8px rgba(31, 158, 47, 0.30);
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -165,6 +188,34 @@ html, body {
   top: 0;
   right: 0;
   z-index: 10001;
+}
+
+/* Light / Dark theme toggle button */
+.theme-toggle {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  image-rendering: pixelated;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-blue);
+  transform: translateY(-2px);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
 }
 
 .toggle-switch {

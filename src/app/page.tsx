@@ -6,6 +6,7 @@ import { PacmanComponent } from './pacman/pacman-component';
 import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
 import { TetrisComponent } from './tetris/tetris-component';
 import { SnakeComponent } from './snake/snake-component';
+import { ThemeToggle } from './theme-toggle';
 
 type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | null;
 
@@ -14,10 +15,9 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      {/* Settings bar for global controls (like CRT effect toggle) */}
+      {/* Settings bar for global controls — shown on the menu and during games */}
       <div className="settings-bar">
-        {/* We place scanlines toggles inside the game cabinet component, 
-            but this bar is prepared for global dashboard variables if needed */}
+        <ThemeToggle />
       </div>
 
       {activeGame === null ? (
