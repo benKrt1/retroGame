@@ -1,10 +1,10 @@
-// Server-side only. Calls Claude on AWS Bedrock via the Converse API using a
-// Bedrock API key (bearer token). The key never reaches the browser.
+// Server-side only. Powers the ARCADE ORACLE via the Groq API (free tier,
+// OpenAI-compatible, runs open-source Llama models). The key is read from the
+// environment and never reaches the browser.
 //
 // Required env (set in .env.local locally / EnvironmentFile on the server):
-//   AWS_BEARER_TOKEN_BEDROCK = the Bedrock API key (bearer token)
-//   BEDROCK_REGION           = region where Claude model access is enabled (e.g. eu-central-1)
-//   BEDROCK_MODEL_ID         = the model id / inference profile (e.g. eu.anthropic.claude-3-5-sonnet-20240620-v1:0)
+//   GROQ_API_KEY = your Groq API key (free, from console.groq.com)
+//   GROQ_MODEL   = optional, defaults to llama-3.3-70b-versatile
 
 export const dynamic = 'force-dynamic';
 
@@ -52,48 +52,37 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Conversation must start with a user message' }, { status: 400 });
   }
 
-  const token = process.env.AWS_BEARER_TOKEN_BEDROCK;
-  const region = process.env.BEDROCK_REGION;
-  const modelId = process.env.BEDROCK_MODEL_ID;
-  if (!token || !region || !modelId) {
-    return Response.json(
-      { error: 'Oracle is not configured (Bedrock key/region/model missing)' },
-      { status: 503 }
-    );
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    return Response.json({ error: 'Oracle is not configured (missing GROQ_API_KEY)' }, { status: 503 });
   }
-
-  const url = `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(
-    modelId
-  )}/converse`;
+  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        system: [{ text: SYSTEM_PROMPT }],
-        messages: history.map((m) => ({ role: m.role, content: [{ text: m.content }] })),
-        inferenceConfig: { maxTokens: 512, temperature: 0.7 },
+        model,
+        max_tokens: 512,
+        temperature: 0.7,
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
       }),
     });
 
     if (!res.ok) {
       const detail = await res.text();
-      console.error('Bedrock error', res.status, detail.slice(0, 500));
+      console.error('Groq error', res.status, detail.slice(0, 500));
       return Response.json({ error: 'The Oracle is unavailable right now.' }, { status: 502 });
     }
 
     const data = (await res.json()) as {
-      output?: { message?: { content?: Array<{ text?: string }> } };
+      choices?: Array<{ message?: { content?: string } }>;
     };
-    const reply =
-      data.output?.message?.content
-        ?.map((b) => b.text ?? '')
-        .join('')
-        .trim() ?? '';
+    const reply = (data.choices?.[0]?.message?.content ?? '').trim();
 
     return Response.json({ reply: reply || '...the Oracle is silent.' });
   } catch (error) {
