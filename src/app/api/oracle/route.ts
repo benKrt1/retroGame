@@ -1,7 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
-
-// Server-side only. The Anthropic SDK reads ANTHROPIC_API_KEY from the
-// environment — the key is never exposed to the browser.
+// Server-side only. Calls Claude on AWS Bedrock via the Converse API using a
+// Bedrock API key (bearer token). The key never reaches the browser.
+//
+// Required env (set in .env.local locally / EnvironmentFile on the server):
+//   AWS_BEARER_TOKEN_BEDROCK = the Bedrock API key (bearer token)
+//   BEDROCK_REGION           = region where Claude model access is enabled (e.g. eu-central-1)
+//   BEDROCK_MODEL_ID         = the model id / inference profile (e.g. eu.anthropic.claude-3-5-sonnet-20240620-v1:0)
 
 export const dynamic = 'force-dynamic';
 
@@ -49,32 +52,52 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Conversation must start with a user message' }, { status: 400 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return Response.json({ error: 'Oracle is not configured (missing API key)' }, { status: 503 });
+  const token = process.env.AWS_BEARER_TOKEN_BEDROCK;
+  const region = process.env.BEDROCK_REGION;
+  const modelId = process.env.BEDROCK_MODEL_ID;
+  if (!token || !region || !modelId) {
+    return Response.json(
+      { error: 'Oracle is not configured (Bedrock key/region/model missing)' },
+      { status: 503 }
+    );
   }
 
+  const url = `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(
+    modelId
+  )}/converse`;
+
   try {
-    const client = new Anthropic();
-    const response = await client.messages.create({
-      model: 'claude-opus-4-8',
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
-      messages: history,
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        system: [{ text: SYSTEM_PROMPT }],
+        messages: history.map((m) => ({ role: m.role, content: [{ text: m.content }] })),
+        inferenceConfig: { maxTokens: 512, temperature: 0.7 },
+      }),
     });
 
-    const reply = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('')
-      .trim();
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error('Bedrock error', res.status, detail.slice(0, 500));
+      return Response.json({ error: 'The Oracle is unavailable right now.' }, { status: 502 });
+    }
+
+    const data = (await res.json()) as {
+      output?: { message?: { content?: Array<{ text?: string }> } };
+    };
+    const reply =
+      data.output?.message?.content
+        ?.map((b) => b.text ?? '')
+        .join('')
+        .trim() ?? '';
 
     return Response.json({ reply: reply || '...the Oracle is silent.' });
   } catch (error) {
-    if (error instanceof Anthropic.APIError) {
-      console.error('Anthropic API error', error.status, error.message);
-    } else {
-      console.error('Oracle error', error);
-    }
+    console.error('Oracle error', error);
     return Response.json({ error: 'The Oracle is unavailable right now.' }, { status: 502 });
   }
 }
