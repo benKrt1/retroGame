@@ -1,0 +1,229 @@
+/* Retro Arcade Cabinet Layout — Space Invaders */
+.arcadeCabinet {
+  background: #090911;
+  border: 6px solid var(--border-color);
+  box-shadow: 0 0 25px rgba(31, 31, 53, 0.6), inset 0 0 15px rgba(0, 0, 0, 0.8);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.arcadeCabinet::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 2px solid var(--accent-blue);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: var(--shadow-blue);
+  opacity: 0.8;
+}
+
+.arcadeHeader {
+  width: 100%;
+  margin-bottom: 15px;
+  text-align: center;
+  border-bottom: 2px dashed var(--border-color);
+  padding-bottom: 10px;
+}
+
+.title {
+  font-size: 14px;
+  color: #9dff5d;
+  text-shadow: 0 0 8px rgba(157, 255, 93, 0.6);
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.scoreBoard {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 6px;
+  gap: 6px;
+}
+
+.scoreItem {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 8px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.value {
+  font-size: 12px;
+  color: var(--text-primary);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.screenWrapper {
+  background-color: #000;
+  border: 4px solid #1a1a2e;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+  width: 100%;
+}
+
+.canvas {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  aspect-ratio: 19 / 21;
+  background-color: #020205;
+  display: block;
+}
+
+/* Cabinet Controls */
+.cabinetControls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.livesContainer {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.livesList {
+  display: flex;
+  gap: 6px;
+}
+
+/* A little green cannon icon for each remaining life */
+.cannonLife {
+  width: 16px;
+  height: 12px;
+  background-color: #2bd44b;
+  clip-path: polygon(0% 100%, 0% 55%, 42% 55%, 42% 0%, 58% 0%, 58% 55%, 100% 55%, 100% 100%);
+}
+
+/* Button Group */
+.btnGroup {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn {
+  flex: 1;
+  max-width: 120px;
+  padding: 8px;
+  font-size: 8px;
+  border-width: 2px;
+}
+
+/* On-screen LEFT / FIRE / RIGHT controls */
+.controlPad {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+@media (min-width: 768px) {
+  /* Hide touch controls on desktop since keyboard is standard */
+  .controlPad {
+    display: none;
+  }
+}
+
+.ctrlBtn {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: var(--font-press-start-2p), monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.1s ease;
+  border-radius: 4px;
+}
+
+.ctrlBtn:active {
+  background: var(--accent-blue);
+  color: var(--bg-primary);
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-blue);
+  transform: scale(0.95);
+}
+
+.moveBtn {
+  width: 56px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.fireBtn {
+  flex: 1;
+  height: 48px;
+  font-size: 10px;
+  color: #ff5d5d;
+  border-color: #ff5d5d;
+}
+
+.fireBtn:active {
+  background: #ff5d5d;
+  color: var(--bg-primary);
+  border-color: #ff5d5d;
+  box-shadow: 0 0 10px rgba(255, 93, 93, 0.6);
+}
+
+/* Settings Options */
+.settingsRow {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 8px;
+  color: var(--text-secondary);
+  border-top: 2px solid var(--border-color);
+  padding-top: 10px;
+  margin-top: 5px;
+}
+
+.optionToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.instructions {
+  font-size: 7px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-top: 5px;
+  border-top: 2px solid var(--border-color);
+  padding-top: 10px;
+  width: 100%;
+}

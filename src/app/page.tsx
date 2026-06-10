@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import styles from './page.module.css';
 import { PacmanComponent } from './pacman/pacman-component';
+import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
 
-type GameId = 'pacman' | null;
+type GameId = 'pacman' | 'space-invaders' | null;
 
 export default function Home() {
   const [activeGame, setActiveGame] = useState<GameId>(null);
@@ -53,10 +54,20 @@ export default function Home() {
             </div>
 
             {/* Space Invaders */}
-            <div className={`${styles.cabinetCard} ${styles.lockedCard}`}>
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('space-invaders')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('space-invaders');
+                }
+              }}
+            >
               <div className={styles.cardTop}>
                 <span className={styles.cardIcon}>👾</span>
-                <span className={styles.badge}>LOCKED</span>
+                <span className={styles.badge}>READY</span>
               </div>
               <div className={styles.cardBody}>
                 <h3 className={styles.cardTitle}>SPACE INVADERS</h3>
@@ -65,7 +76,7 @@ export default function Home() {
                 </p>
               </div>
               <div className={styles.cardFooter}>
-                <span className={styles.cardAction}>COMING SOON</span>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
 
@@ -112,6 +123,9 @@ export default function Home() {
         <div className={styles.gameContainer}>
           {activeGame === 'pacman' && (
             <PacmanComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'space-invaders' && (
+            <SpaceInvadersComponent onBack={() => setActiveGame(null)} />
           )}
         </div>
       )}
