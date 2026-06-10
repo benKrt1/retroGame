@@ -209,21 +209,21 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
 
         {/* Options Row */}
         <div className={styles.settingsRow}>
-          <div className={styles.optionToggle} onClick={() => setSoundOn(!soundOn)}>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={soundOn} readOnly />
+          <label className={styles.optionToggle}>
+            <span className="toggle-switch">
+              <input type="checkbox" checked={soundOn} onChange={(e) => setSoundOn(e.target.checked)} />
               <span className="toggle-slider"></span>
-            </label>
+            </span>
             <span>SOUND: {soundOn ? 'ON' : 'OFF'}</span>
-          </div>
+          </label>
 
-          <div className={styles.optionToggle} onClick={() => setScanlinesOn(!scanlinesOn)}>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={scanlinesOn} readOnly />
+          <label className={styles.optionToggle}>
+            <span className="toggle-switch">
+              <input type="checkbox" checked={scanlinesOn} onChange={(e) => setScanlinesOn(e.target.checked)} />
               <span className="toggle-slider"></span>
-            </label>
+            </span>
             <span>CRT SCANLINES</span>
-          </div>
+          </label>
         </div>
 
         <div className={styles.instructions}>
