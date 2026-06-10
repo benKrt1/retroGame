@@ -1,8 +1,10 @@
 # 🕹️ RETRO CADE
 
-A browser-based retro arcade built with **Next.js** + **TypeScript**. Each game runs on a hand-written HTML5 Canvas engine with a chiptune **Web Audio** soundtrack and a CRT-styled cabinet UI — no game frameworks, no audio files.
+A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring four hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack and a CRT-styled cabinet UI — no game frameworks, no audio files. The **ARCADE ORACLE** adds an AI chat cabinet powered by **Claude on AWS Bedrock**, and the whole app is deployed to **AWS EC2 with Terraform**.
 
 > `> SELECT A CABINET TO BOOT <`
+
+**🔗 Live demo (AWS):** http://ec2-16-16-57-148.eu-north-1.compute.amazonaws.com
 
 ## 🎮 Games
 
@@ -13,6 +15,14 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**. Each game 
 | 🧱 **Tetris** | ✅ Playable | 7-bag randomizer, hold piece, ghost piece, next-queue preview, wall kicks, soft/hard drop, levels & line-clear scoring, looping Korobeiniki theme |
 | 🐍 **Snake** | ✅ Playable | Grid-based snake, apples, progressive speed-up, high score, smooth tween rendering |
 
+## 🤖 ARCADE ORACLE (Generative AI)
+
+A fifth cabinet: a retro CRT chat terminal where an 8-bit AI game master answers questions and gives strategies, hints and trivia for every game.
+
+- The browser calls an internal server route (`/api/oracle`); the route calls **Claude on AWS Bedrock** via the **Converse API**.
+- The API key is read from an environment variable **server-side only** — it never reaches the browser.
+- Model: **Claude Haiku 4.5** on Bedrock (region `eu-north-1`), configurable via env vars.
+
 ## 🚀 Getting Started
 
 ```bash
@@ -21,6 +31,18 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and click a cabinet to boot it.
+
+### Enabling the ARCADE ORACLE locally
+
+Copy `.env.example` to `.env.local` and fill in your AWS Bedrock API key (the games work without it; only the Oracle needs it):
+
+```bash
+AWS_BEARER_TOKEN_BEDROCK=your-bedrock-api-key
+BEDROCK_REGION=eu-north-1
+BEDROCK_MODEL_ID=eu.anthropic.claude-haiku-4-5-20251001-v1:0
+```
+
+`.env.local` is gitignored — **never commit your key**.
 
 ### Scripts
 
@@ -41,35 +63,30 @@ Open [http://localhost:3000](http://localhost:3000) and click a cabinet to boot 
 
 **Snake** — Arrow keys / `WASD` to steer, `Space` to pause.
 
-On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles.
+On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles, and there's a global light/dark theme switch.
 
 ## 🏗️ Architecture
 
-Built on the Next.js App Router. Each game is a self-contained module under `src/app/<game>/` following the same three-part pattern:
+Built on the Next.js App Router. Each game is a self-contained module under `src/app/<game>/` following the same three-part pattern; the Oracle adds a client component plus a server route handler.
 
 ```
 src/app/
 ├── page.tsx                 # Arcade menu — selects which cabinet to render
 ├── globals.css              # Shared retro theme, CRT effect, toggle styles
+├── theme-toggle.tsx         # Light/dark theme switch
+├── api/
+│   └── oracle/route.ts      # Server route: calls Claude on AWS Bedrock (key stays server-side)
+├── oracle/
+│   ├── oracle-component.tsx # 'use client' CRT chat UI
+│   └── oracle.module.css
 ├── pacman/
 │   ├── pacman-game.ts        # Framework-free Canvas engine (game logic + rendering)
 │   ├── pacman-component.tsx  # 'use client' React wrapper: canvas, HUD, controls
 │   ├── pacman.module.css     # Cabinet styling
 │   └── sound-synth.ts        # Web Audio chiptune synthesizer
 ├── space-invaders/
-│   ├── space-invaders-game.ts
-│   ├── space-invaders-component.tsx
-│   ├── space-invaders.module.css
-│   └── invader-synth.ts
 ├── tetris/
-│   ├── tetris-game.ts
-│   ├── tetris-component.tsx
-│   ├── tetris.module.css
-│   └── tetris-synth.ts
-└── snake/
-    ├── snake-game.ts          # reuses Pac-Man's sound-synth
-    ├── snake-component.tsx
-    └── snake.module.css
+└── snake/                    # (each mirrors the pacman/ layout)
 ```
 
 **Engine** (`*-game.ts`) — a plain TypeScript class with a uniform API:
@@ -85,13 +102,22 @@ It owns the game state machine, a `requestAnimationFrame` loop with delta-timing
 
 **Sound** (`*-synth.ts`) — a lazily-initialized Web Audio synthesizer (oscillators, gain envelopes, noise buffers). All SFX are generated at runtime; nothing is loaded from disk. Audio resumes on user interaction per browser autoplay policy.
 
+**Oracle** (`api/oracle/route.ts` + `oracle/`) — a server route handler that proxies chat messages to Claude on AWS Bedrock, plus a client CRT chat UI. The key lives only on the server.
+
+## ☁️ Deployment (AWS + Terraform)
+
+The app is hosted on an **AWS EC2** instance provisioned with **Terraform** (Infrastructure as Code):
+
+- A `user-data` startup script adds swap, installs **Node 20** and **nginx**, clones this repo, runs `npm ci && npm run build`, and serves the app as a **systemd** service behind an **nginx reverse proxy** (port 80 → 3000).
+- The Bedrock key is injected as a **sensitive Terraform variable** into a protected environment file on the server — kept out of Git.
+- `terraform apply` builds the whole stack and outputs the public link.
+
 ## 🛠️ Tech Stack
 
-- [Next.js 16](https://nextjs.org) (App Router, Turbopack)
-- [React 19](https://react.dev)
-- [TypeScript 5](https://www.typescriptlang.org)
-- HTML5 Canvas 2D + Web Audio API
-- CSS Modules
+- [Next.js 16](https://nextjs.org) (App Router, Turbopack) · [React 19](https://react.dev) · [TypeScript 5](https://www.typescriptlang.org)
+- HTML5 Canvas 2D + Web Audio API · CSS Modules
+- **Generative AI:** Claude on **AWS Bedrock** (Converse API)
+- **Hosting:** AWS EC2 + nginx, provisioned with **Terraform**
 
 ## ➕ Adding a New Game
 
