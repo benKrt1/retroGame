@@ -1,142 +1,217 @@
-.page {
-  --background: #fafafa;
-  --foreground: #fff;
-
-  --text-primary: #000;
-  --text-secondary: #666;
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
-
+.main {
+  min-height: 100vh;
   display: flex;
-  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-geist-sans);
-  background-color: var(--background);
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
 }
 
-.main {
-  display: flex;
-  flex: 1;
-  width: 100%;
-  max-width: 800px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  background-color: var(--foreground);
-  padding: 120px 60px;
+.header {
+  text-align: center;
+  margin-bottom: 50px;
+  z-index: 10;
 }
 
-.intro {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 24px;
-}
-
-.intro h1 {
-  max-width: 320px;
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 48px;
-  letter-spacing: -2.4px;
-  text-wrap: balance;
+.logoText {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
   color: var(--text-primary);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  animation: logoGlow 3s ease-in-out infinite alternate;
 }
 
-.intro p {
-  max-width: 440px;
-  font-size: 18px;
-  line-height: 32px;
-  text-wrap: balance;
+@keyframes logoGlow {
+  0% {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2), 0 0 15px rgba(0, 229, 255, 0.2);
+  }
+  100% {
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 30px rgba(0, 229, 255, 0.6), 0 0 40px rgba(0, 229, 255, 0.3);
+    color: var(--accent-blue);
+  }
+}
+
+.subtitle {
+  font-size: 8px;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  animation: blink 1.5s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Grid Layout */
+.gameGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 25px;
+  width: 100%;
+  max-width: 900px;
+  z-index: 10;
+}
+
+@media (min-width: 640px) {
+  .gameGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Cabinet Card styles */
+.cabinetCard {
+  background: var(--bg-card);
+  border: 4px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+  user-select: none;
+}
+
+.cabinetCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  transition: all 0.3s ease;
+}
+
+/* Active Hover effects */
+.activeCard:hover {
+  transform: translateY(-8px);
+  border-color: var(--accent-yellow);
+  box-shadow: var(--shadow-yellow);
+}
+
+.activeCard:hover::before {
+  background: var(--accent-yellow);
+}
+
+.activeCard:hover .cardTitle {
+  color: var(--accent-yellow);
+  text-shadow: var(--shadow-yellow);
+}
+
+.activeCard:hover .cardAction {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* Locked Card styles */
+.lockedCard {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-style: dotted;
+}
+
+.lockedCard:hover {
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.15);
+  border-color: var(--accent-pink);
+}
+
+.lockedCard:hover .cardTitle {
+  color: var(--accent-pink);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.cardIcon {
+  font-size: 24px;
+  image-rendering: pixelated;
+}
+
+.badge {
+  font-size: 7px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
   color: var(--text-secondary);
 }
 
-.intro a {
-  font-weight: 500;
-  color: var(--text-primary);
+.activeCard .badge {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  box-shadow: 0 0 5px rgba(57, 255, 20, 0.2);
 }
 
-.ctas {
+.cardBody {
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  margin-bottom: 10px;
+  transition: color 0.3s ease;
+}
+
+.cardDesc {
+  font-size: 8px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.cardFooter {
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  max-width: 440px;
-  gap: 16px;
-  font-size: 14px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.ctas a {
+.cardAction {
+  font-size: 8px;
+  font-weight: bold;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+/* Full Screen Loader overlay */
+.gameContainer {
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 128px;
-  border: 1px solid transparent;
-  transition: 0.2s;
-  cursor: pointer;
-  width: fit-content;
-  font-weight: 500;
+  z-index: 10;
+  animation: bootCabinet 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
-a.primary {
-  background: var(--text-primary);
-  color: var(--background);
-  gap: 8px;
-}
-
-a.secondary {
-  border-color: var(--button-secondary-border);
-}
-
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
+@keyframes bootCabinet {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(40px);
+    filter: blur(10px);
   }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
   }
 }
 
-@media (max-width: 600px) {
-  .main {
-    padding: 48px 24px;
-  }
-
-  .intro {
-    gap: 16px;
-  }
-
-  .intro h1 {
-    font-size: 32px;
-    line-height: 40px;
-    letter-spacing: -1.92px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
-
-  .page {
-    --background: #000;
-    --foreground: #000;
-
-    --text-primary: #ededed;
-    --text-secondary: #999;
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
-  }
+.footer {
+  margin-top: 50px;
+  font-size: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+  z-index: 10;
+  opacity: 0.6;
 }
