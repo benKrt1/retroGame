@@ -142,7 +142,7 @@ export default function Home() {
           </footer>
         </>
       ) : (
-        <div className={styles.gameContainer}>
+        <div className={styles.gameContainer} data-theme="dark">
           {activeGame === 'pacman' && (
             <PacmanComponent onBack={() => setActiveGame(null)} />
           )}
