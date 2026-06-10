@@ -10,8 +10,8 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**. Each game 
 |------|--------|-----------|
 | 🟡 **Pac-Man** | ✅ Playable | Classic maze, dots & power pellets, four ghosts with scatter/chase modes, intro theme |
 | 👾 **Space Invaders** | ✅ Playable | Marching invader grid that speeds up, destructible shields, UFO bonus, waves, high score, the iconic 4-note march beat |
-| 🧱 **Tetris** | 🔒 Coming soon | — |
-| 🐍 **Snake** | 🔒 Coming soon | Engine in progress |
+| 🧱 **Tetris** | ✅ Playable | 7-bag randomizer, hold piece, ghost piece, next-queue preview, wall kicks, soft/hard drop, levels & line-clear scoring, looping Korobeiniki theme |
+| 🐍 **Snake** | ✅ Playable | Grid-based snake, apples, progressive speed-up, high score, smooth tween rendering |
 
 ## 🚀 Getting Started
 
@@ -37,6 +37,10 @@ Open [http://localhost:3000](http://localhost:3000) and click a cabinet to boot 
 
 **Space Invaders** — `←` `→` / `A` `D` to move, `Space` / `↑` to fire, `P` to pause.
 
+**Tetris** — `←` `→` move, `↓` soft drop, `↑` / `X` rotate CW, `Z` rotate CCW, `Space` hard drop, `C` hold, `P` pause.
+
+**Snake** — Arrow keys / `WASD` to steer, `Space` to pause.
+
 On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles.
 
 ## 🏗️ Architecture
@@ -52,11 +56,20 @@ src/app/
 │   ├── pacman-component.tsx  # 'use client' React wrapper: canvas, HUD, controls
 │   ├── pacman.module.css     # Cabinet styling
 │   └── sound-synth.ts        # Web Audio chiptune synthesizer
-└── space-invaders/
-    ├── space-invaders-game.ts
-    ├── space-invaders-component.tsx
-    ├── space-invaders.module.css
-    └── invader-synth.ts
+├── space-invaders/
+│   ├── space-invaders-game.ts
+│   ├── space-invaders-component.tsx
+│   ├── space-invaders.module.css
+│   └── invader-synth.ts
+├── tetris/
+│   ├── tetris-game.ts
+│   ├── tetris-component.tsx
+│   ├── tetris.module.css
+│   └── tetris-synth.ts
+└── snake/
+    ├── snake-game.ts          # reuses Pac-Man's sound-synth
+    ├── snake-component.tsx
+    └── snake.module.css
 ```
 
 **Engine** (`*-game.ts`) — a plain TypeScript class with a uniform API:

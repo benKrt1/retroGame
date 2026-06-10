@@ -5,8 +5,9 @@ import styles from './page.module.css';
 import { PacmanComponent } from './pacman/pacman-component';
 import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
 import { TetrisComponent } from './tetris/tetris-component';
+import { SnakeComponent } from './snake/snake-component';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | null;
 
 export default function Home() {
   const [activeGame, setActiveGame] = useState<GameId>(null);
@@ -109,10 +110,20 @@ export default function Home() {
             </div>
 
             {/* Snake */}
-            <div className={`${styles.cabinetCard} ${styles.lockedCard}`}>
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('snake')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('snake');
+                }
+              }}
+            >
               <div className={styles.cardTop}>
                 <span className={styles.cardIcon}>🐍</span>
-                <span className={styles.badge}>LOCKED</span>
+                <span className={styles.badge}>READY</span>
               </div>
               <div className={styles.cardBody}>
                 <h3 className={styles.cardTitle}>SNAKE</h3>
@@ -121,7 +132,7 @@ export default function Home() {
                 </p>
               </div>
               <div className={styles.cardFooter}>
-                <span className={styles.cardAction}>COMING SOON</span>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
           </section>
@@ -140,6 +151,9 @@ export default function Home() {
           )}
           {activeGame === 'tetris' && (
             <TetrisComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'snake' && (
+            <SnakeComponent onBack={() => setActiveGame(null)} />
           )}
         </div>
       )}
