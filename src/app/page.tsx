@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import styles from './page.module.css';
 import { PacmanComponent } from './pacman/pacman-component';
 import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
+import { TetrisComponent } from './tetris/tetris-component';
 
-type GameId = 'pacman' | 'space-invaders' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | null;
 
 export default function Home() {
   const [activeGame, setActiveGame] = useState<GameId>(null);
@@ -81,10 +82,20 @@ export default function Home() {
             </div>
 
             {/* Tetris */}
-            <div className={`${styles.cabinetCard} ${styles.lockedCard}`}>
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('tetris')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('tetris');
+                }
+              }}
+            >
               <div className={styles.cardTop}>
                 <span className={styles.cardIcon}>🧱</span>
-                <span className={styles.badge}>LOCKED</span>
+                <span className={styles.badge}>READY</span>
               </div>
               <div className={styles.cardBody}>
                 <h3 className={styles.cardTitle}>TETRIS</h3>
@@ -93,7 +104,7 @@ export default function Home() {
                 </p>
               </div>
               <div className={styles.cardFooter}>
-                <span className={styles.cardAction}>COMING SOON</span>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
 
@@ -126,6 +137,9 @@ export default function Home() {
           )}
           {activeGame === 'space-invaders' && (
             <SpaceInvadersComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'tetris' && (
+            <TetrisComponent onBack={() => setActiveGame(null)} />
           )}
         </div>
       )}
