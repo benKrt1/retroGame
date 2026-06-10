@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './page.module.css';
 import { PacmanComponent } from './pacman/pacman-component';
 import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
@@ -10,8 +10,32 @@ import { ThemeToggle } from './theme-toggle';
 
 type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | null;
 
+// Tab title + favicon per screen. The menu shows the arcade brand; booting a
+// game swaps both to that game's identity.
+const MENU_CHROME = { title: 'RETRO CADE — Mini Games Arcade', icon: '/favicons/menu.svg' };
+const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }> = {
+  'pacman': { title: 'PAC-MAN — RETRO CADE', icon: '/favicons/pacman.svg' },
+  'space-invaders': { title: 'SPACE INVADERS — RETRO CADE', icon: '/favicons/space-invaders.svg' },
+  'tetris': { title: 'TETRIS — RETRO CADE', icon: '/favicons/tetris.svg' },
+  'snake': { title: 'SNAKE — RETRO CADE', icon: '/favicons/snake.svg' },
+};
+
 export default function Home() {
   const [activeGame, setActiveGame] = useState<GameId>(null);
+
+  // Drive the browser tab's title + favicon from the active game.
+  useEffect(() => {
+    const chrome = activeGame ? GAME_CHROME[activeGame] : MENU_CHROME;
+    document.title = chrome.title;
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.type = 'image/svg+xml';
+    link.href = chrome.icon;
+  }, [activeGame]);
 
   return (
     <main className={styles.main}>

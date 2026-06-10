@@ -19,8 +19,11 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "RETRO CADE - Mini Games Arcade",
+  title: "RETRO CADE — Mini Games Arcade",
   description: "A sleek minimalist retro arcade cabinet with custom games, starting with Pacman.",
+  icons: {
+    icon: "/favicons/menu.svg",
+  },
 };
 
 export default function RootLayout({
