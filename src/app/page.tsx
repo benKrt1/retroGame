@@ -6,9 +6,10 @@ import { PacmanComponent } from './pacman/pacman-component';
 import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
 import { TetrisComponent } from './tetris/tetris-component';
 import { SnakeComponent } from './snake/snake-component';
+import { OracleComponent } from './oracle/oracle-component';
 import { ThemeToggle } from './theme-toggle';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'oracle' | null;
 
 // Tab title + favicon per screen. The menu shows the arcade brand; booting a
 // game swaps both to that game's identity.
@@ -18,6 +19,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'space-invaders': { title: 'SPACE INVADERS — RETRO CADE', icon: '/favicons/space-invaders.svg' },
   'tetris': { title: 'TETRIS — RETRO CADE', icon: '/favicons/tetris.svg' },
   'snake': { title: 'SNAKE — RETRO CADE', icon: '/favicons/snake.svg' },
+  'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
 
 export default function Home() {
@@ -159,6 +161,33 @@ export default function Home() {
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
+
+            {/* Arcade Oracle — AI chat */}
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('oracle')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('oracle');
+                }
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon}>🤖</span>
+                <span className={styles.badge}>AI</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>ARCADE ORACLE</h3>
+                <p className={styles.cardDesc}>
+                  CHAT WITH THE 8-BIT AI GAME MASTER. ASK FOR STRATEGIES, HINTS AND TRIVIA ON EVERY CABINET. POWERED BY GENERATIVE AI.
+                </p>
+              </div>
+              <div className={styles.cardFooter}>
+                <span className={styles.cardAction}>[ CONSULT ORACLE ]</span>
+              </div>
+            </div>
           </section>
 
           <footer className={styles.footer}>
@@ -178,6 +207,9 @@ export default function Home() {
           )}
           {activeGame === 'snake' && (
             <SnakeComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'oracle' && (
+            <OracleComponent onBack={() => setActiveGame(null)} />
           )}
         </div>
       )}

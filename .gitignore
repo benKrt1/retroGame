@@ -45,3 +45,5 @@ CLAUDE.md
 
 # local docs / assignment PDFs
 *.pdf
+# allow the example env template
+!.env.example
