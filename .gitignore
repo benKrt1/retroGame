@@ -47,3 +47,7 @@ CLAUDE.md
 *.pdf
 # allow the example env template
 !.env.example
+
+# personal deliverables (kept local, not published)
+RETRO_CADE_Documentation.docx
+VIDEO_SCRIPT.md
