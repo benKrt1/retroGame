@@ -267,3 +267,50 @@
   color: var(--text-secondary);
   line-height: 1.4;
 }
+
+/* Mobile menu layout — below the grid breakpoint, the absolute top-left
+   launcher would land on top of the centered RETRO CADE title. Drop it into
+   normal flow (it already precedes the header in markup) as a compact banner
+   above the title, and stop vertically centering so nothing clips off-screen. */
+@media (max-width: 639px) {
+  .main {
+    justify-content: flex-start;
+    padding: 64px 16px 32px;
+  }
+
+  .oracleLauncher {
+    position: static;
+    width: 100%;
+    max-width: 360px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .oracleBtn {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .oracleTitle {
+    font-size: 9px;
+  }
+
+  .oracleHint {
+    display: none;
+  }
+
+  .header {
+    margin-bottom: 32px;
+  }
+
+  .logoText {
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+}
