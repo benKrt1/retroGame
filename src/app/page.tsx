@@ -48,6 +48,19 @@ export default function Home() {
 
       {activeGame === null ? (
         <>
+          {/* Arcade Oracle launcher — top-left round button + caption */}
+          <div className={styles.oracleLauncher}>
+            <button
+              className={styles.oracleBtn}
+              onClick={() => setActiveGame('oracle')}
+              aria-label="Open the Arcade Oracle AI chat"
+            >
+              🤖
+            </button>
+            <span className={styles.oracleTitle}>ARCADE ORACLE</span>
+            <span className={styles.oracleHint}>AI game master — ask for tips &amp; strategies</span>
+          </div>
+
           <header className={styles.header}>
             <h1 className={styles.logoText}>RETRO CADE</h1>
             <p className={styles.subtitle}>&gt; SELECT A CABINET TO BOOT &lt;</p>
@@ -159,33 +172,6 @@ export default function Home() {
               </div>
               <div className={styles.cardFooter}>
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
-              </div>
-            </div>
-
-            {/* Arcade Oracle — AI chat */}
-            <div
-              className={`${styles.cabinetCard} ${styles.activeCard}`}
-              onClick={() => setActiveGame('oracle')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  setActiveGame('oracle');
-                }
-              }}
-            >
-              <div className={styles.cardTop}>
-                <span className={styles.cardIcon}>🤖</span>
-                <span className={styles.badge}>AI</span>
-              </div>
-              <div className={styles.cardBody}>
-                <h3 className={styles.cardTitle}>ARCADE ORACLE</h3>
-                <p className={styles.cardDesc}>
-                  CHAT WITH THE 8-BIT AI GAME MASTER. ASK FOR STRATEGIES, HINTS AND TRIVIA ON EVERY CABINET. POWERED BY GENERATIVE AI.
-                </p>
-              </div>
-              <div className={styles.cardFooter}>
-                <span className={styles.cardAction}>[ CONSULT ORACLE ]</span>
               </div>
             </div>
           </section>
