@@ -4,7 +4,7 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring 
 
 > `> SELECT A CABINET TO BOOT <`
 
-**🔗 Live demo (AWS):** http://ec2-16-16-57-148.eu-north-1.compute.amazonaws.com
+**🔗 Live demo (AWS):** http://ec2-16-171-54-4.eu-north-1.compute.amazonaws.com
 
 ## 🎮 Games
 
