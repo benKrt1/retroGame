@@ -6,10 +6,11 @@ import { PacmanComponent } from './pacman/pacman-component';
 import { SpaceInvadersComponent } from './space-invaders/space-invaders-component';
 import { TetrisComponent } from './tetris/tetris-component';
 import { SnakeComponent } from './snake/snake-component';
+import { FightingComponent } from './fighting/fighting-component';
 import { OracleComponent } from './oracle/oracle-component';
 import { ThemeToggle } from './theme-toggle';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'oracle' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'oracle' | null;
 
 // Tab title + favicon per screen. The menu shows the arcade brand; booting a
 // game swaps both to that game's identity.
@@ -19,6 +20,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'space-invaders': { title: 'SPACE INVADERS — RETRO CADE', icon: '/favicons/space-invaders.svg' },
   'tetris': { title: 'TETRIS — RETRO CADE', icon: '/favicons/tetris.svg' },
   'snake': { title: 'SNAKE — RETRO CADE', icon: '/favicons/snake.svg' },
+  'fighting': { title: 'PIXEL BRAWL — RETRO CADE', icon: '/favicons/fighting.svg' },
   'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
 
@@ -174,6 +176,33 @@ export default function Home() {
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
+
+            {/* Pixel Brawl */}
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('fighting')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('fighting');
+                }
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon}>🥊</span>
+                <span className={styles.badge}>READY</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>PIXEL BRAWL</h3>
+                <p className={styles.cardDesc}>
+                  TWO BLOCKY NEON BRAWLERS TRADE PUNCHES AND KICKS. FIGHT THE CPU OR A FRIEND IN BEST-OF-3 KNOCKOUT ROUNDS.
+                </p>
+              </div>
+              <div className={styles.cardFooter}>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
+              </div>
+            </div>
           </section>
 
           <footer className={styles.footer}>
@@ -193,6 +222,9 @@ export default function Home() {
           )}
           {activeGame === 'snake' && (
             <SnakeComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'fighting' && (
+            <FightingComponent onBack={() => setActiveGame(null)} />
           )}
           {activeGame === 'oracle' && (
             <OracleComponent onBack={() => setActiveGame(null)} />
