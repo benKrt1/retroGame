@@ -154,6 +154,37 @@ const SPRITES: Record<number, [string[], string[]]> = {
 
 const SPRITE_COLORS = ['#ff5dd2', '#5de2ff', '#9dff5d'];
 
+// --- Visual "juice" entities (rendering only, no gameplay effect) ---
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number; // ms remaining
+  maxLife: number;
+  size: number;
+  color: string;
+}
+
+interface ScorePopup {
+  x: number;
+  y: number;
+  text: string;
+  life: number;
+  maxLife: number;
+}
+
+interface Star {
+  x: number;
+  y: number;
+  size: number;
+  phase: number;
+}
+
+const STAR_COUNT = 55;
+const MAX_SHAKE_MS = 420;
+const MAX_FLASH_MS = 260;
+
 export class SpaceInvadersEngine {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -193,6 +224,15 @@ export class SpaceInvadersEngine {
   private ufoDir: 1 | -1 = 1;
   private ufoTimer = 0;
 
+  // Visual effects (rendering only).
+  private particles: Particle[] = [];
+  private popups: ScorePopup[] = [];
+  private stars: Star[] = [];
+  private elapsed = 0; // ms, drives starfield twinkle
+  private shakeTime = 0;
+  private shakeMag = 0;
+  private flashTime = 0;
+
   // Loop / state.
   private state: SpaceInvadersState = 'START';
   private animationId: number | null = null;
@@ -212,7 +252,20 @@ export class SpaceInvadersEngine {
     this.onStatusChange = onStatusChange;
 
     this.highScore = this.loadHighScore();
+    this.initStars();
     this.resetGame();
+  }
+
+  private initStars() {
+    this.stars = [];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      this.stars.push({
+        x: Math.random() * CW,
+        y: Math.random() * CH,
+        size: 0.6 + Math.random() * 1.2,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
   }
 
   private loadHighScore(): number {
@@ -232,6 +285,10 @@ export class SpaceInvadersEngine {
     this.lives = 3;
     this.wave = 1;
     this.state = 'START';
+    this.particles = [];
+    this.popups = [];
+    this.shakeTime = 0;
+    this.flashTime = 0;
     this.initWave();
     this.drawFrame();
     this.updateStatus();
@@ -374,6 +431,7 @@ export class SpaceInvadersEngine {
     this.lastTime = timestamp;
     if (delta > 60) delta = 60; // cap after tab switches / long frames
     const f = delta / 16.67; // normalized frame factor
+    this.elapsed += delta;
 
     if (this.state === 'PLAYING') {
       this.updatePlayer(f);
@@ -381,9 +439,11 @@ export class SpaceInvadersEngine {
       this.updateInvaders(delta);
       this.updateInvaderBullets(f, delta);
       this.updateUfo(f, delta);
+      this.updateEffects(f, delta);
       this.checkCollisions();
     } else if (this.state === 'DYING') {
       this.dyingTimer -= delta;
+      this.updateEffects(f, delta);
       if (this.dyingTimer <= 0) {
         this.afterDeath();
       }
@@ -563,7 +623,14 @@ export class SpaceInvadersEngine {
         this.ufoActive = false;
         this.synth.stopUfo();
         this.synth.playInvaderKilled();
-        this.addScore(this.randomUfoBonus());
+        const bonus = this.randomUfoBonus();
+        this.addScore(bonus);
+        const ux = this.ufoX + UFO_W / 2;
+        const uy = UFO_Y + UFO_H / 2;
+        this.spawnBurst(ux, uy, 18, ['#ff4d4d', '#ffd24d', '#ffffff'], 0.8, 3, 320, 700);
+        this.popups.push({ x: ux, y: uy, text: `+${bonus}`, life: 800, maxLife: 800 });
+        this.shakeTime = Math.max(this.shakeTime, 140);
+        this.shakeMag = Math.max(this.shakeMag, 3);
         this.ufoTimer = this.randomUfoDelay();
       }
     }
@@ -578,8 +645,13 @@ export class SpaceInvadersEngine {
             this.alive[r][c] = false;
             this.aliveCount--;
             pb.alive = false;
-            this.addScore(rowPoints(r));
+            const pts = rowPoints(r);
+            this.addScore(pts);
             this.synth.playInvaderKilled();
+            const icx = x + INV_W / 2;
+            const icy = y + INV_H / 2;
+            this.spawnBurst(icx, icy, 12, [SPRITE_COLORS[rowType(r)], '#ffffff'], 0.6, 2.4, 260, 560);
+            this.popups.push({ x: icx, y: icy, text: `+${pts}`, life: 700, maxLife: 700 });
             break outer;
           }
         }
@@ -663,6 +735,14 @@ export class SpaceInvadersEngine {
   private playerHit() {
     this.lives--;
     this.synth.playPlayerExplosion();
+    // Burst + shake + flash at the cannon.
+    this.spawnBurst(
+      this.playerX + PLAYER_W / 2, PLAYER_Y + PLAYER_H / 2,
+      28, ['#2bd44b', '#9dff5d', '#ffffff'], 1, 4, 500, 1100
+    );
+    this.shakeTime = MAX_SHAKE_MS;
+    this.shakeMag = 7;
+    this.flashTime = MAX_FLASH_MS;
     this.updateStatus();
     if (this.lives <= 0) {
       this.gameOver();
@@ -698,6 +778,14 @@ export class SpaceInvadersEngine {
     this.ctx.fillStyle = '#020205';
     this.ctx.fillRect(0, 0, CW, CH);
 
+    // Shake the gameplay layer (stars + entities + effects), not the overlays.
+    this.ctx.save();
+    if (this.shakeTime > 0) {
+      const amt = this.shakeMag * (this.shakeTime / MAX_SHAKE_MS);
+      this.ctx.translate((Math.random() - 0.5) * amt * 2, (Math.random() - 0.5) * amt * 2);
+    }
+
+    this.drawStars();
     this.drawShields();
     if (this.state !== 'GAMEOVER') {
       this.drawInvaders();
@@ -705,6 +793,16 @@ export class SpaceInvadersEngine {
       if (this.state !== 'DYING') this.drawPlayer();
       else this.drawPlayerExplosion();
       this.drawBullets();
+    }
+    this.drawParticles();
+    this.drawPopups();
+
+    this.ctx.restore();
+
+    // Full-screen white flash on impact (un-shaken).
+    if (this.flashTime > 0) {
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * (this.flashTime / MAX_FLASH_MS)})`;
+      this.ctx.fillRect(0, 0, CW, CH);
     }
 
     // Ground line.
@@ -720,13 +818,126 @@ export class SpaceInvadersEngine {
     }
   }
 
+  // ---- Visual effects ----
+
+  private spawnBurst(
+    x: number, y: number, count: number,
+    palette: string[], speedMin: number, speedMax: number,
+    lifeMin: number, lifeMax: number
+  ) {
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const sp = speedMin + Math.random() * (speedMax - speedMin);
+      const life = lifeMin + Math.random() * (lifeMax - lifeMin);
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        life, maxLife: life,
+        size: 1 + Math.random() * 1.8,
+        color: palette[Math.floor(Math.random() * palette.length)],
+      });
+    }
+  }
+
+  private updateEffects(f: number, delta: number) {
+    for (const p of this.particles) {
+      p.x += p.vx * f;
+      p.y += p.vy * f;
+      p.vx *= Math.pow(0.97, f);
+      p.vy *= Math.pow(0.97, f);
+      p.life -= delta;
+    }
+    this.particles = this.particles.filter((p) => p.life > 0);
+
+    for (const s of this.popups) {
+      s.y -= 0.4 * f;
+      s.life -= delta;
+    }
+    this.popups = this.popups.filter((s) => s.life > 0);
+
+    if (this.shakeTime > 0) this.shakeTime -= delta;
+    if (this.flashTime > 0) this.flashTime -= delta;
+  }
+
+  private drawStars() {
+    for (const s of this.stars) {
+      const tw = 0.3 + 0.4 * (0.5 + 0.5 * Math.sin(this.elapsed * 0.002 + s.phase));
+      this.ctx.fillStyle = `rgba(200, 210, 230, ${tw})`;
+      this.ctx.fillRect(s.x, s.y, s.size, s.size);
+    }
+  }
+
+  private drawParticles() {
+    for (const p of this.particles) {
+      this.ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      this.ctx.fillStyle = p.color;
+      this.ctx.shadowColor = p.color;
+      this.ctx.shadowBlur = 4;
+      this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    this.ctx.globalAlpha = 1;
+    this.ctx.shadowBlur = 0;
+  }
+
+  private drawPopups() {
+    this.ctx.font = '8px "Press Start 2P", monospace';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.shadowColor = 'rgba(157, 255, 93, 0.5)';
+    this.ctx.shadowBlur = 6;
+    for (const s of this.popups) {
+      this.ctx.globalAlpha = Math.max(0, s.life / s.maxLife);
+      this.ctx.fillStyle = '#9dff5d';
+      this.ctx.fillText(s.text, s.x, s.y);
+    }
+    this.ctx.globalAlpha = 1;
+    this.ctx.shadowBlur = 0;
+  }
+
   private drawPlayer() {
-    this.ctx.fillStyle = '#2bd44b';
-    // Cannon base.
-    this.ctx.fillRect(this.playerX, PLAYER_Y + 6, PLAYER_W, PLAYER_H - 6);
-    this.ctx.fillRect(this.playerX + 4, PLAYER_Y + 3, PLAYER_W - 8, 4);
+    const ctx = this.ctx;
+    const x = this.playerX;
+    const cx = x + PLAYER_W / 2;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(43, 212, 75, 0.6)';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#2bd44b';
+
+    // Hull: trapezoid spanning the footprint.
+    ctx.beginPath();
+    ctx.moveTo(x, PLAYER_Y + PLAYER_H);
+    ctx.lineTo(x + 3, PLAYER_Y + 7);
+    ctx.lineTo(x + PLAYER_W - 3, PLAYER_Y + 7);
+    ctx.lineTo(x + PLAYER_W, PLAYER_Y + PLAYER_H);
+    ctx.closePath();
+    ctx.fill();
+
+    // Raised turret dome.
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, PLAYER_Y + 7);
+    ctx.lineTo(cx - 3, PLAYER_Y + 1);
+    ctx.lineTo(cx + 3, PLAYER_Y + 1);
+    ctx.lineTo(cx + 6, PLAYER_Y + 7);
+    ctx.closePath();
+    ctx.fill();
+
     // Barrel.
-    this.ctx.fillRect(this.playerX + PLAYER_W / 2 - 2, PLAYER_Y - 2, 4, 6);
+    ctx.fillRect(cx - 1.5, PLAYER_Y - 3, 3, 5);
+    ctx.shadowBlur = 0;
+
+    // Brighter side fins.
+    ctx.fillStyle = '#9dff5d';
+    ctx.fillRect(x, PLAYER_Y + PLAYER_H - 4, 3, 4);
+    ctx.fillRect(x + PLAYER_W - 3, PLAYER_Y + PLAYER_H - 4, 3, 4);
+
+    // Cyan cockpit.
+    ctx.fillStyle = '#5de2ff';
+    ctx.beginPath();
+    ctx.arc(cx, PLAYER_Y + 5, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   private drawPlayerExplosion() {
@@ -745,12 +956,15 @@ export class SpaceInvadersEngine {
       const type = rowType(r);
       const bitmap = SPRITES[type][frame];
       this.ctx.fillStyle = SPRITE_COLORS[type];
+      this.ctx.shadowColor = SPRITE_COLORS[type];
+      this.ctx.shadowBlur = 5;
       for (let c = 0; c < INV_COLS; c++) {
         if (!this.alive[r][c]) continue;
         const { x, y } = this.invaderPos(r, c);
         this.drawBitmap(bitmap, x, y, 2);
       }
     }
+    this.ctx.shadowBlur = 0;
   }
 
   private drawBitmap(bitmap: string[], x: number, y: number, px: number) {
@@ -766,6 +980,8 @@ export class SpaceInvadersEngine {
 
   private drawUfo() {
     if (!this.ufoActive) return;
+    this.ctx.shadowColor = '#ff4d4d';
+    this.ctx.shadowBlur = 8;
     this.ctx.fillStyle = '#ff4d4d';
     this.ctx.fillRect(this.ufoX + 4, UFO_Y + 4, UFO_W - 8, UFO_H - 6);
     this.ctx.fillRect(this.ufoX, UFO_Y + UFO_H - 4, UFO_W, 3);
@@ -773,19 +989,25 @@ export class SpaceInvadersEngine {
     this.ctx.fillStyle = '#ffd24d';
     this.ctx.fillRect(this.ufoX + 6, UFO_Y + UFO_H - 3, 2, 2);
     this.ctx.fillRect(this.ufoX + UFO_W - 8, UFO_Y + UFO_H - 3, 2, 2);
+    this.ctx.shadowBlur = 0;
   }
 
   private drawBullets() {
-    // Player bullet.
+    // Player bullet (white core, cyan glow).
     if (this.playerBullet.alive) {
+      this.ctx.shadowColor = '#5de2ff';
+      this.ctx.shadowBlur = 8;
       this.ctx.fillStyle = '#ffffff';
       this.ctx.fillRect(this.playerBullet.x, this.playerBullet.y, BULLET_W, BULLET_H);
     }
-    // Invader bullets.
+    // Invader bullets (orange glow).
+    this.ctx.shadowColor = '#ff9d4d';
+    this.ctx.shadowBlur = 6;
     this.ctx.fillStyle = '#ff9d4d';
     for (const b of this.invaderBullets) {
       if (b.alive) this.ctx.fillRect(b.x, b.y, BULLET_W, BULLET_H);
     }
+    this.ctx.shadowBlur = 0;
   }
 
   private drawShields() {
