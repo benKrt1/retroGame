@@ -1,0 +1,9 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <rect width="32" height="32" rx="6" fill="#050508"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5" fill="none" stroke="#1f1f35" stroke-width="1.5"/>
+  <!-- vector ship -->
+  <polygon points="16,6 23,25 16,21 9,25" fill="none" stroke="#5de2ff" stroke-width="2" stroke-linejoin="round"/>
+  <!-- a couple of drifting rocks -->
+  <circle cx="6" cy="9" r="2.5" fill="none" stroke="#c9c9d6" stroke-width="1.5"/>
+  <circle cx="26" cy="12" r="2" fill="none" stroke="#c9c9d6" stroke-width="1.5"/>
+</svg>
