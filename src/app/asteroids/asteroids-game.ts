@@ -67,6 +67,8 @@ interface Asteroid {
   angle: number; // current rotation
   spin: number; // rotation per frame
   verts: number[]; // jagged radius multipliers, one per vertex
+  craters: { x: number; y: number; r: number }[]; // local-space surface detail
+  tone: number; // 0-1 lightness variation
 }
 
 // --- Visual "juice" entities (rendering only, no gameplay effect) ---
@@ -234,10 +236,24 @@ export class AsteroidsEngine {
 
     const speed = AST_BASE_SPEED * (1 + (3 - size) * 0.55);
     const dir = Math.random() * Math.PI * 2;
+    const radius = AST_RADIUS[size];
     const vertCount = 9 + Math.floor(Math.random() * 4);
     const verts: number[] = [];
     for (let v = 0; v < vertCount; v++) {
       verts.push(0.72 + Math.random() * 0.42); // jagged radius multiplier
+    }
+
+    // Precompute craters (stable surface detail) in local space, kept inside the body.
+    const craters: { x: number; y: number; r: number }[] = [];
+    const craterCount = 2 + Math.floor(Math.random() * 3); // 2-4
+    for (let c = 0; c < craterCount; c++) {
+      const cang = Math.random() * Math.PI * 2;
+      const cdist = radius * (0.15 + Math.random() * 0.4);
+      craters.push({
+        x: Math.cos(cang) * cdist,
+        y: Math.sin(cang) * cdist,
+        r: radius * (0.1 + Math.random() * 0.16),
+      });
     }
 
     return {
@@ -246,10 +262,12 @@ export class AsteroidsEngine {
       vx: Math.cos(dir) * speed,
       vy: Math.sin(dir) * speed,
       size,
-      radius: AST_RADIUS[size],
+      radius,
       angle: Math.random() * Math.PI * 2,
       spin: (Math.random() - 0.5) * 0.04,
       verts,
+      craters,
+      tone: Math.random(),
     };
   }
 
@@ -680,40 +698,74 @@ export class AsteroidsEngine {
     this.ctx.save();
     this.ctx.translate(x, y);
     this.ctx.rotate(angle);
+
+    // Thrust flame from the engine nozzle (drawn first, behind the hull).
+    if (this.thrust && Math.random() > 0.25) {
+      const reach = 9 + Math.random() * 6;
+      this.ctx.shadowColor = 'rgba(255, 157, 77, 0.8)';
+      this.ctx.shadowBlur = 8;
+      this.ctx.fillStyle = '#ffeb3b';
+      this.ctx.beginPath();
+      this.ctx.moveTo(-3.5, 8);
+      this.ctx.lineTo(0, 8 + reach);
+      this.ctx.lineTo(3.5, 8);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.fillStyle = '#ff9d4d';
+      this.ctx.beginPath();
+      this.ctx.moveTo(-2, 8);
+      this.ctx.lineTo(0, 8 + reach * 0.6);
+      this.ctx.lineTo(2, 8);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.shadowBlur = 0;
+    }
+
+    // Hull: pointed nose, narrowing fuselage, swept-back wings, flat engine tail.
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, -11);    // nose
+    this.ctx.lineTo(2.5, -4);
+    this.ctx.lineTo(4, 1);
+    this.ctx.lineTo(9, 7);      // right wing tip
+    this.ctx.lineTo(4.5, 6);
+    this.ctx.lineTo(3, 9);      // tail right
+    this.ctx.lineTo(0, 7);      // engine notch
+    this.ctx.lineTo(-3, 9);     // tail left
+    this.ctx.lineTo(-4.5, 6);
+    this.ctx.lineTo(-9, 7);     // left wing tip
+    this.ctx.lineTo(-4, 1);
+    this.ctx.lineTo(-2.5, -4);
+    this.ctx.closePath();
+
+    this.ctx.fillStyle = '#0a0a16';
+    this.ctx.fill();
     this.ctx.strokeStyle = '#5de2ff';
     this.ctx.lineWidth = 2;
     this.ctx.shadowColor = 'rgba(93, 226, 255, 0.5)';
     this.ctx.shadowBlur = 6;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, -SHIP_R - 2); // nose
-    this.ctx.lineTo(SHIP_R - 1, SHIP_R);
-    this.ctx.lineTo(0, SHIP_R - 3); // tail notch
-    this.ctx.lineTo(-(SHIP_R - 1), SHIP_R);
-    this.ctx.closePath();
     this.ctx.stroke();
     this.ctx.shadowBlur = 0;
 
-    // Flickering thrust flame.
-    if (this.thrust && Math.random() > 0.3) {
-      this.ctx.strokeStyle = '#ff9d4d';
-      this.ctx.beginPath();
-      this.ctx.moveTo(-4, SHIP_R - 2);
-      this.ctx.lineTo(0, SHIP_R + 6);
-      this.ctx.lineTo(4, SHIP_R - 2);
-      this.ctx.stroke();
-    }
+    // Cockpit canopy near the nose.
+    this.ctx.fillStyle = '#9be8ff';
+    this.ctx.beginPath();
+    this.ctx.ellipse(0, -3, 1.8, 3, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Engine nozzle at the tail.
+    this.ctx.fillStyle = '#ff9d4d';
+    this.ctx.fillRect(-2.5, 7, 5, 2);
+
     this.ctx.restore();
   }
 
   private drawAsteroids() {
-    this.ctx.strokeStyle = '#c9c9d6';
-    this.ctx.lineWidth = 2;
-    this.ctx.shadowColor = 'rgba(93, 226, 255, 0.45)';
-    this.ctx.shadowBlur = 6;
     for (const a of this.asteroids) {
       this.ctx.save();
       this.ctx.translate(a.x, a.y);
       this.ctx.rotate(a.angle);
+
+      // Jagged rock outline path.
       this.ctx.beginPath();
       for (let v = 0; v < a.verts.length; v++) {
         const ang = (v / a.verts.length) * Math.PI * 2;
@@ -724,10 +776,42 @@ export class AsteroidsEngine {
         else this.ctx.lineTo(px, py);
       }
       this.ctx.closePath();
+
+      // Solid shaded body: lit from the top-left for a 3D rock look.
+      const hi = Math.round(140 + a.tone * 45); // 140-185
+      const lo = Math.round(45 + a.tone * 25);  // 45-70
+      const grad = this.ctx.createRadialGradient(
+        -a.radius * 0.35, -a.radius * 0.35, a.radius * 0.15,
+        0, 0, a.radius * 1.15
+      );
+      grad.addColorStop(0, `rgb(${hi}, ${hi - 6}, ${hi - 12})`);
+      grad.addColorStop(1, `rgb(${lo}, ${lo - 4}, ${lo})`);
+      this.ctx.fillStyle = grad;
+      this.ctx.fill();
+
+      // Lighter jagged edge with a subtle neon glow to stay on-theme.
+      this.ctx.strokeStyle = '#c9c9d6';
+      this.ctx.lineWidth = 1.5;
+      this.ctx.shadowColor = 'rgba(93, 226, 255, 0.3)';
+      this.ctx.shadowBlur = 4;
       this.ctx.stroke();
+      this.ctx.shadowBlur = 0;
+
+      // Craters: dark pits with a lit rim arc on the top-left side.
+      for (const cr of a.craters) {
+        this.ctx.fillStyle = 'rgba(18, 18, 26, 0.5)';
+        this.ctx.beginPath();
+        this.ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.strokeStyle = 'rgba(205, 210, 225, 0.25)';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.arc(cr.x, cr.y, cr.r, Math.PI * 0.9, Math.PI * 1.7);
+        this.ctx.stroke();
+      }
+
       this.ctx.restore();
     }
-    this.ctx.shadowBlur = 0;
   }
 
   private drawBullets() {
