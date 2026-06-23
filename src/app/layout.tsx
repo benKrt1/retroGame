@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 
@@ -24,6 +24,18 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicons/menu.svg",
   },
+};
+
+// Mobile-friendly viewport: lock zoom so double-taps on the game controls
+// don't accidentally zoom, and use viewport-fit=cover so the cabinet can use
+// env(safe-area-inset-*) to clear notches / the home indicator in landscape.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#050508",
 };
 
 export default function RootLayout({

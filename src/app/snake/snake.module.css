@@ -7,7 +7,10 @@
   border-radius: 12px;
   padding: 24px;
   width: 100%;
-  max-width: min(94vw, max(75vw, 420px), calc((100vh - 310px) * 19 / 21 + 68px));
+  /* dvh tracks the mobile URL bar so the cabinet never overflows under it.
+     --chrome-h reserves room for the header + controls; raised on phones. */
+  --chrome-h: 310px;
+  max-width: min(94vw, max(75vw, 420px), calc((100dvh - var(--chrome-h)) * 19 / 21 + 68px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -148,7 +151,7 @@
 /* D-Pad ------------------------------------------------------------------- */
 .dpadContainer {
   width: 100%;
-  max-width: 160px;
+  max-width: 210px;
   display: grid;
   grid-template-areas:
     ".    up    ."
@@ -158,6 +161,7 @@
   grid-template-rows: 1fr 1fr 1fr;
   gap: 8px;
   margin-top: 10px;
+  justify-items: center;
 }
 
 @media (min-width: 768px) {
@@ -169,14 +173,17 @@
   border: 2px solid var(--border-color);
   color: var(--text-primary);
   font-family: var(--font-press-start-2p), monospace;
-  font-size: 12px;
-  height: 44px;
-  width: 44px;
+  font-size: 14px;
+  height: clamp(48px, 15vw, 60px);
+  width: clamp(48px, 15vw, 60px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   user-select: none;
+  /* Stop the browser eating taps as scroll/zoom gestures + kill the tap flash. */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.1s ease;
   border-radius: 4px;
 }
@@ -229,4 +236,65 @@
   border-top: 2px solid var(--border-color);
   padding-top: 10px;
   width: 100%;
+}
+
+/* Phone portrait — tighten the chrome so the whole cabinet fits without
+   scrolling, and reserve more vertical room for the taller controls. */
+@media (max-width: 767px) {
+  .arcadeCabinet {
+    --chrome-h: 348px;
+    padding: 14px;
+  }
+  .cabinetControls { gap: 10px; }
+}
+
+/* Phone landscape — console-style flank: screen centered, d-pad on the left,
+   system buttons on the right. Re-shows the d-pad hidden by the desktop rule. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .arcadeCabinet {
+    max-width: none;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    grid-template-areas:
+      "head head head"
+      "left screen right";
+    align-items: center;
+    gap: 6px 10px;
+    padding: 6px;
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(6px, env(safe-area-inset-right));
+  }
+  .arcadeHeader {
+    grid-area: head;
+    margin-bottom: 0;
+    padding-bottom: 6px;
+  }
+  .screenWrapper {
+    grid-area: screen;
+    margin-bottom: 0;
+    max-height: 92dvh;
+  }
+  .canvas {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 84dvh;
+  }
+  .cabinetControls { display: contents; }
+  .dpadContainer {
+    display: grid;
+    grid-area: left;
+    margin: 0;
+    max-width: 168px;
+  }
+  .btnGroup {
+    grid-area: right;
+    flex-direction: column;
+    width: auto;
+  }
+  .btn { max-width: none; }
+  .speedBar,
+  .settingsRow,
+  .instructions { display: none; }
 }

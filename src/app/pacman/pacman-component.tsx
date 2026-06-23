@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from './pacman.module.css';
 import { PacmanEngine, Direction, GameState } from './pacman-game';
 import { synthInstance } from './sound-synth';
+import { useGameShell } from '../use-game-shell';
 
 interface PacmanComponentProps {
   onBack?: () => void;
@@ -22,6 +23,9 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
   // Settings state
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+
+  // Shared mobile shell: CRT sync, scroll lock, orientation.
+  useGameShell({ scanlinesOn });
 
   // Initialize engine
   useEffect(() => {
@@ -102,19 +106,6 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
   useEffect(() => {
     synthInstance.setEnabled(soundOn);
   }, [soundOn]);
-
-  useEffect(() => {
-    const mainBody = document.querySelector('body');
-    if (mainBody) {
-      if (scanlinesOn) {
-        mainBody.classList.add('crt-effect');
-        mainBody.classList.add('crt-flicker-active');
-      } else {
-        mainBody.classList.remove('crt-effect');
-        mainBody.classList.remove('crt-flicker-active');
-      }
-    }
-  }, [scanlinesOn]);
 
   // Game control handlers
   const handleStartGame = () => {
@@ -198,13 +189,13 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
           )}
         </div>
 
-        {/* Mobile virtual controls */}
+        {/* Mobile virtual controls — pointer events for instant, lag-free taps */}
         <div className={styles.dpadContainer}>
-          <button className={`${styles.dpadBtn} ${styles.dpadUp}`} onClick={() => handleDpadPress('UP')}>▲</button>
-          <button className={`${styles.dpadBtn} ${styles.dpadLeft}`} onClick={() => handleDpadPress('LEFT')}>◀</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadUp}`} onPointerDown={() => handleDpadPress('UP')} onContextMenu={(e) => e.preventDefault()}>▲</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadLeft}`} onPointerDown={() => handleDpadPress('LEFT')} onContextMenu={(e) => e.preventDefault()}>◀</button>
           <div className={styles.dpadCenter} />
-          <button className={`${styles.dpadBtn} ${styles.dpadRight}`} onClick={() => handleDpadPress('RIGHT')}>▶</button>
-          <button className={`${styles.dpadBtn} ${styles.dpadDown}`} onClick={() => handleDpadPress('DOWN')}>▼</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadRight}`} onPointerDown={() => handleDpadPress('RIGHT')} onContextMenu={(e) => e.preventDefault()}>▶</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadDown}`} onPointerDown={() => handleDpadPress('DOWN')} onContextMenu={(e) => e.preventDefault()}>▼</button>
         </div>
 
         {/* Options Row */}

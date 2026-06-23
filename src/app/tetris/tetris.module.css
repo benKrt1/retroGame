@@ -6,7 +6,10 @@
   border-radius: 12px;
   padding: 24px;
   width: 100%;
-  max-width: min(94vw, max(75vw, 420px), calc((100vh - 310px) * 19 / 21 + 68px));
+  /* dvh tracks the mobile URL bar so the cabinet never overflows under it.
+     --chrome-h reserves room for the header + controls; raised on phones. */
+  --chrome-h: 310px;
+  max-width: min(94vw, max(75vw, 420px), calc((100dvh - var(--chrome-h)) * 19 / 21 + 68px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -119,15 +122,28 @@
   border-width: 2px;
 }
 
-/* On-screen controls */
+/* On-screen controls — movement pad (left) + rotate/actions (right) */
 .controlPad {
   width: 100%;
-  max-width: 280px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  margin-top: 6px;
+}
+
+.controlsLeft,
+.controlsRight {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-top: 6px;
+}
+
+.controlsRight {
+  min-width: 160px;
 }
 
 @media (min-width: 768px) {
@@ -158,6 +174,9 @@
   justify-content: center;
   cursor: pointer;
   user-select: none;
+  /* Stop the browser eating taps as scroll/zoom gestures + kill the tap flash. */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.1s ease;
   border-radius: 4px;
 }
@@ -222,4 +241,67 @@
   border-top: 2px solid var(--border-color);
   padding-top: 10px;
   width: 100%;
+}
+
+/* Phone portrait — tighten the chrome so the whole cabinet fits without
+   scrolling, and reserve more vertical room for the taller controls. */
+@media (max-width: 767px) {
+  .arcadeCabinet {
+    --chrome-h: 360px;
+    padding: 14px;
+  }
+  .cabinetControls { gap: 10px; }
+}
+
+/* Phone landscape — console-style flank: movement pad left, rotate/actions
+   right, system buttons tucked top-right. Re-shows the controls the desktop
+   rule hides (a phone in landscape is often wider than 768px). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .arcadeCabinet {
+    max-width: none;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    grid-template-areas:
+      "head head sys"
+      "left screen right";
+    align-items: center;
+    gap: 6px 10px;
+    padding: 6px;
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(6px, env(safe-area-inset-right));
+  }
+  .arcadeHeader {
+    grid-area: head;
+    margin-bottom: 0;
+    padding-bottom: 6px;
+  }
+  .screenWrapper {
+    grid-area: screen;
+    margin-bottom: 0;
+    max-height: 92dvh;
+  }
+  .canvas {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 84dvh;
+  }
+  .cabinetControls { display: contents; }
+  .btnGroup {
+    grid-area: sys;
+    flex-direction: column;
+    width: auto;
+    gap: 6px;
+  }
+  .btn {
+    max-width: none;
+    padding: 6px;
+    font-size: 7px;
+  }
+  .controlPad { display: contents; }
+  .controlsLeft { grid-area: left; }
+  .controlsRight { grid-area: right; }
+  .settingsRow,
+  .instructions { display: none; }
 }

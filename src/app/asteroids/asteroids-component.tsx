@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from './asteroids.module.css';
 import { AsteroidsEngine, AsteroidsState } from './asteroids-game';
 import { asteroidsSynthInstance } from './asteroids-synth';
+import { useGameShell } from '../use-game-shell';
 
 interface AsteroidsComponentProps {
   onBack?: () => void;
@@ -23,6 +24,9 @@ export const AsteroidsComponent: React.FC<AsteroidsComponentProps> = ({ onBack }
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+
+  // Shared mobile shell: CRT sync, scroll lock, orientation.
+  useGameShell({ scanlinesOn });
 
   // Initialize engine + keyboard controls.
   useEffect(() => {
@@ -117,20 +121,6 @@ export const AsteroidsComponent: React.FC<AsteroidsComponentProps> = ({ onBack }
     asteroidsSynthInstance.setEnabled(soundOn);
   }, [soundOn]);
 
-  // Sync CRT scanlines effect on the body.
-  useEffect(() => {
-    const mainBody = document.querySelector('body');
-    if (mainBody) {
-      if (scanlinesOn) {
-        mainBody.classList.add('crt-effect');
-        mainBody.classList.add('crt-flicker-active');
-      } else {
-        mainBody.classList.remove('crt-effect');
-        mainBody.classList.remove('crt-flicker-active');
-      }
-    }
-  }, [scanlinesOn]);
-
   // Game control handlers.
   const handleStartGame = () => engineRef.current?.start();
   const handlePauseGame = () => engineRef.current?.pause();
@@ -201,42 +191,50 @@ export const AsteroidsComponent: React.FC<AsteroidsComponentProps> = ({ onBack }
           )}
         </div>
 
-        {/* On-screen hold-controls (mobile) */}
+        {/* On-screen hold-controls (mobile) — rotate left, thrust/fire right so
+            in landscape each cluster flanks the screen for a thumb. */}
         <div className={styles.controlPad}>
-          <button
-            className={`${styles.ctrlBtn} ${styles.moveBtn}`}
-            onPointerDown={rotLeftDown}
-            onPointerUp={rotLeftUp}
-            onPointerLeave={rotLeftUp}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            ↺
-          </button>
-          <button
-            className={`${styles.ctrlBtn} ${styles.thrustBtn}`}
-            onPointerDown={thrustDown}
-            onPointerUp={thrustUp}
-            onPointerLeave={thrustUp}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            THRUST
-          </button>
-          <button
-            className={`${styles.ctrlBtn} ${styles.moveBtn}`}
-            onPointerDown={rotRightDown}
-            onPointerUp={rotRightUp}
-            onPointerLeave={rotRightUp}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            ↻
-          </button>
-          <button
-            className={`${styles.ctrlBtn} ${styles.fireBtn}`}
-            onPointerDown={fire}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            FIRE
-          </button>
+          <div className={styles.controlsLeft}>
+            <button
+              className={`${styles.ctrlBtn} ${styles.moveBtn}`}
+              onPointerDown={rotLeftDown}
+              onPointerUp={rotLeftUp}
+              onPointerLeave={rotLeftUp}
+              onPointerCancel={rotLeftUp}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              ↺
+            </button>
+            <button
+              className={`${styles.ctrlBtn} ${styles.moveBtn}`}
+              onPointerDown={rotRightDown}
+              onPointerUp={rotRightUp}
+              onPointerLeave={rotRightUp}
+              onPointerCancel={rotRightUp}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              ↻
+            </button>
+          </div>
+          <div className={styles.controlsRight}>
+            <button
+              className={`${styles.ctrlBtn} ${styles.thrustBtn}`}
+              onPointerDown={thrustDown}
+              onPointerUp={thrustUp}
+              onPointerLeave={thrustUp}
+              onPointerCancel={thrustUp}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              THRUST
+            </button>
+            <button
+              className={`${styles.ctrlBtn} ${styles.fireBtn}`}
+              onPointerDown={fire}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              FIRE
+            </button>
+          </div>
         </div>
 
         {/* Settings options — single-fire toggles (controlled input inside a label) */}

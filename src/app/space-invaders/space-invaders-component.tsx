@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from './space-invaders.module.css';
 import { SpaceInvadersEngine, SpaceInvadersState } from './space-invaders-game';
 import { invaderSynthInstance } from './invader-synth';
+import { useGameShell } from '../use-game-shell';
 
 interface SpaceInvadersComponentProps {
   onBack?: () => void;
@@ -23,6 +24,9 @@ export const SpaceInvadersComponent: React.FC<SpaceInvadersComponentProps> = ({ 
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+
+  // Shared mobile shell: CRT sync, scroll lock, orientation.
+  useGameShell({ scanlinesOn });
 
   // Initialize engine + keyboard controls.
   useEffect(() => {
@@ -112,20 +116,6 @@ export const SpaceInvadersComponent: React.FC<SpaceInvadersComponentProps> = ({ 
     invaderSynthInstance.setEnabled(soundOn);
   }, [soundOn]);
 
-  // Sync CRT scanlines effect on the body.
-  useEffect(() => {
-    const mainBody = document.querySelector('body');
-    if (mainBody) {
-      if (scanlinesOn) {
-        mainBody.classList.add('crt-effect');
-        mainBody.classList.add('crt-flicker-active');
-      } else {
-        mainBody.classList.remove('crt-effect');
-        mainBody.classList.remove('crt-flicker-active');
-      }
-    }
-  }, [scanlinesOn]);
-
   // Game control handlers.
   const handleStartGame = () => engineRef.current?.start();
   const handlePauseGame = () => engineRef.current?.pause();
@@ -192,33 +182,40 @@ export const SpaceInvadersComponent: React.FC<SpaceInvadersComponentProps> = ({ 
           )}
         </div>
 
-        {/* On-screen controls (mobile) */}
+        {/* On-screen controls (mobile) — movement grouped left, FIRE right so
+            in landscape each cluster flanks the screen for a thumb. */}
         <div className={styles.controlPad}>
-          <button
-            className={`${styles.ctrlBtn} ${styles.moveBtn}`}
-            onPointerDown={moveLeft}
-            onPointerUp={release}
-            onPointerLeave={release}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            ◀
-          </button>
-          <button
-            className={`${styles.ctrlBtn} ${styles.fireBtn}`}
-            onPointerDown={fire}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            FIRE
-          </button>
-          <button
-            className={`${styles.ctrlBtn} ${styles.moveBtn}`}
-            onPointerDown={moveRight}
-            onPointerUp={release}
-            onPointerLeave={release}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            ▶
-          </button>
+          <div className={styles.controlsLeft}>
+            <button
+              className={`${styles.ctrlBtn} ${styles.moveBtn}`}
+              onPointerDown={moveLeft}
+              onPointerUp={release}
+              onPointerLeave={release}
+              onPointerCancel={release}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              ◀
+            </button>
+            <button
+              className={`${styles.ctrlBtn} ${styles.moveBtn}`}
+              onPointerDown={moveRight}
+              onPointerUp={release}
+              onPointerLeave={release}
+              onPointerCancel={release}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              ▶
+            </button>
+          </div>
+          <div className={styles.controlsRight}>
+            <button
+              className={`${styles.ctrlBtn} ${styles.fireBtn}`}
+              onPointerDown={fire}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              FIRE
+            </button>
+          </div>
         </div>
 
         {/* Settings options — single-fire toggles (controlled input inside a label) */}

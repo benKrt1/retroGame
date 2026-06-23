@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from './tetris.module.css';
 import { TetrisEngine, TetrisState } from './tetris-game';
 import { tetrisSynthInstance } from './tetris-synth';
+import { useGameShell } from '../use-game-shell';
 
 interface TetrisComponentProps {
   onBack?: () => void;
@@ -23,6 +24,9 @@ export const TetrisComponent: React.FC<TetrisComponentProps> = ({ onBack }) => {
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+
+  // Shared mobile shell: CRT sync, scroll lock, orientation.
+  useGameShell({ scanlinesOn });
 
   // Initialize engine + keyboard controls.
   useEffect(() => {
@@ -113,20 +117,6 @@ export const TetrisComponent: React.FC<TetrisComponentProps> = ({ onBack }) => {
     tetrisSynthInstance.setEnabled(soundOn);
   }, [soundOn]);
 
-  // Sync CRT scanlines effect on the body.
-  useEffect(() => {
-    const mainBody = document.querySelector('body');
-    if (mainBody) {
-      if (scanlinesOn) {
-        mainBody.classList.add('crt-effect');
-        mainBody.classList.add('crt-flicker-active');
-      } else {
-        mainBody.classList.remove('crt-effect');
-        mainBody.classList.remove('crt-flicker-active');
-      }
-    }
-  }, [scanlinesOn]);
-
   // Game control handlers.
   const handleStartGame = () => engineRef.current?.start();
   const handlePauseGame = () => engineRef.current?.pause();
@@ -191,55 +181,61 @@ export const TetrisComponent: React.FC<TetrisComponentProps> = ({ onBack }) => {
           )}
         </div>
 
-        {/* On-screen controls (mobile) */}
+        {/* On-screen controls (mobile) — movement pad left, rotate/actions
+            right so in landscape each cluster flanks the screen for a thumb. */}
         <div className={styles.controlPad}>
-          <button
-            className={`${styles.ctrlBtn} ${styles.rotateBtn}`}
-            onPointerDown={rotateCW}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            ⟳
-          </button>
-          <div className={styles.moveRow}>
-            <button
-              className={styles.ctrlBtn}
-              onPointerDown={moveLeft}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              ◀
-            </button>
-            <button
-              className={styles.ctrlBtn}
-              onPointerDown={softOn}
-              onPointerUp={softOff}
-              onPointerLeave={softOff}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              ▼
-            </button>
-            <button
-              className={styles.ctrlBtn}
-              onPointerDown={moveRight}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              ▶
-            </button>
+          <div className={styles.controlsLeft}>
+            <div className={styles.moveRow}>
+              <button
+                className={styles.ctrlBtn}
+                onPointerDown={moveLeft}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                ◀
+              </button>
+              <button
+                className={styles.ctrlBtn}
+                onPointerDown={softOn}
+                onPointerUp={softOff}
+                onPointerLeave={softOff}
+                onPointerCancel={softOff}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                ▼
+              </button>
+              <button
+                className={styles.ctrlBtn}
+                onPointerDown={moveRight}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                ▶
+              </button>
+            </div>
           </div>
-          <div className={styles.actionRow}>
+          <div className={styles.controlsRight}>
             <button
-              className={`${styles.ctrlBtn} ${styles.dropBtn}`}
-              onPointerDown={hardDrop}
+              className={`${styles.ctrlBtn} ${styles.rotateBtn}`}
+              onPointerDown={rotateCW}
               onContextMenu={(e) => e.preventDefault()}
             >
-              DROP
+              ⟳
             </button>
-            <button
-              className={`${styles.ctrlBtn} ${styles.holdBtn}`}
-              onPointerDown={holdPiece}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              HOLD
-            </button>
+            <div className={styles.actionRow}>
+              <button
+                className={`${styles.ctrlBtn} ${styles.dropBtn}`}
+                onPointerDown={hardDrop}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                DROP
+              </button>
+              <button
+                className={`${styles.ctrlBtn} ${styles.holdBtn}`}
+                onPointerDown={holdPiece}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                HOLD
+              </button>
+            </div>
           </div>
         </div>
 

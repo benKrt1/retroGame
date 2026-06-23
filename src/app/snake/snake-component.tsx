@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from './snake.module.css';
 import { SnakeEngine, SnakeDirection, SnakeGameState } from './snake-game';
 import { synthInstance } from '../pacman/sound-synth';
+import { useGameShell } from '../use-game-shell';
 
 interface SnakeComponentProps {
   onBack?: () => void;
@@ -28,6 +29,9 @@ export const SnakeComponent: React.FC<SnakeComponentProps> = ({ onBack }) => {
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+
+  // Shared mobile shell: CRT sync, scroll lock, orientation.
+  useGameShell({ scanlinesOn });
 
   // Initialize engine + keyboard controls.
   useEffect(() => {
@@ -88,20 +92,6 @@ export const SnakeComponent: React.FC<SnakeComponentProps> = ({ onBack }) => {
   useEffect(() => {
     synthInstance.setEnabled(soundOn);
   }, [soundOn]);
-
-  // Sync CRT scanlines effect on the body.
-  useEffect(() => {
-    const mainBody = document.querySelector('body');
-    if (mainBody) {
-      if (scanlinesOn) {
-        mainBody.classList.add('crt-effect');
-        mainBody.classList.add('crt-flicker-active');
-      } else {
-        mainBody.classList.remove('crt-effect');
-        mainBody.classList.remove('crt-flicker-active');
-      }
-    }
-  }, [scanlinesOn]);
 
   // Game control handlers.
   const handleStartGame = () => engineRef.current?.start();
@@ -169,13 +159,13 @@ export const SnakeComponent: React.FC<SnakeComponentProps> = ({ onBack }) => {
           )}
         </div>
 
-        {/* On-screen D-pad (mobile) */}
+        {/* On-screen D-pad (mobile) — pointer events for instant, lag-free taps */}
         <div className={styles.dpadContainer}>
-          <button className={`${styles.dpadBtn} ${styles.dpadUp}`} onClick={() => handleDpad('UP')}>▲</button>
-          <button className={`${styles.dpadBtn} ${styles.dpadLeft}`} onClick={() => handleDpad('LEFT')}>◀</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadUp}`} onPointerDown={() => handleDpad('UP')} onContextMenu={(e) => e.preventDefault()}>▲</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadLeft}`} onPointerDown={() => handleDpad('LEFT')} onContextMenu={(e) => e.preventDefault()}>◀</button>
           <div className={styles.dpadCenter} />
-          <button className={`${styles.dpadBtn} ${styles.dpadRight}`} onClick={() => handleDpad('RIGHT')}>▶</button>
-          <button className={`${styles.dpadBtn} ${styles.dpadDown}`} onClick={() => handleDpad('DOWN')}>▼</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadRight}`} onPointerDown={() => handleDpad('RIGHT')} onContextMenu={(e) => e.preventDefault()}>▶</button>
+          <button className={`${styles.dpadBtn} ${styles.dpadDown}`} onPointerDown={() => handleDpad('DOWN')} onContextMenu={(e) => e.preventDefault()}>▼</button>
         </div>
 
         {/* Settings options — single-fire toggles (controlled input inside a label) */}

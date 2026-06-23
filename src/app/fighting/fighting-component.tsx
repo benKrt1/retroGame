@@ -12,6 +12,7 @@ import {
   PressAction,
 } from './fighting-game';
 import { fightSynth } from './fighting-synth';
+import { useGameShell } from '../use-game-shell';
 
 interface FightingComponentProps {
   onBack?: () => void;
@@ -36,6 +37,10 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
 
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+
+  // Shared mobile shell: CRT sync, scroll lock, orientation (drives the
+  // "rotate" hint — this wide 16:9 game plays best in landscape).
+  const { orientation } = useGameShell({ scanlinesOn });
 
   // Keep the latest status readable inside the keyboard listener (set up once).
   const statusRef = useRef(status);
@@ -128,20 +133,10 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
     };
   }, []);
 
-  // Sync sound + CRT scanlines.
+  // Sync sound.
   useEffect(() => {
     fightSynth.setEnabled(soundOn);
   }, [soundOn]);
-
-  useEffect(() => {
-    const body = document.querySelector('body');
-    if (!body) return;
-    if (scanlinesOn) {
-      body.classList.add('crt-effect', 'crt-flicker-active');
-    } else {
-      body.classList.remove('crt-effect', 'crt-flicker-active');
-    }
-  }, [scanlinesOn]);
 
   // Control handlers.
   const handlePlay = () => engineRef.current?.play();
@@ -240,6 +235,11 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
           )}
         </div>
 
+        {/* Rotate hint — this wide game plays best in landscape on a phone. */}
+        {orientation === 'portrait' && (
+          <div className={styles.rotateHint}>↻ ROTATE YOUR PHONE FOR THE BEST FIGHT</div>
+        )}
+
         {/* On-screen controls (mobile, Player 1 only) */}
         {status.mode === '2P' ? (
           <div className={styles.touchNote}>2-PLAYER NEEDS A KEYBOARD</div>
@@ -251,6 +251,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
                 onPointerDown={() => touchHold('left', true)}
                 onPointerUp={() => touchHold('left', false)}
                 onPointerLeave={() => touchHold('left', false)}
+                onPointerCancel={() => touchHold('left', false)}
               >
                 ◀
               </button>
@@ -265,6 +266,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
                 onPointerDown={() => touchHold('crouch', true)}
                 onPointerUp={() => touchHold('crouch', false)}
                 onPointerLeave={() => touchHold('crouch', false)}
+                onPointerCancel={() => touchHold('crouch', false)}
               >
                 ▼
               </button>
@@ -273,6 +275,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
                 onPointerDown={() => touchHold('right', true)}
                 onPointerUp={() => touchHold('right', false)}
                 onPointerLeave={() => touchHold('right', false)}
+                onPointerCancel={() => touchHold('right', false)}
               >
                 ▶
               </button>
@@ -289,6 +292,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
                 onPointerDown={() => touchHold('block', true)}
                 onPointerUp={() => touchHold('block', false)}
                 onPointerLeave={() => touchHold('block', false)}
+                onPointerCancel={() => touchHold('block', false)}
               >
                 B
               </button>

@@ -53,8 +53,28 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-press-start-2p), monospace;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   line-height: 1.5;
+  /* Stop the page from rubber-banding / pull-to-refreshing on mobile. */
+  overscroll-behavior: none;
+}
+
+/* Applied to <body> while a game is mounted (see useGameShell). Kills
+   pull-to-refresh and pinch-zoom and stops control/canvas swipes from
+   scrolling the page, while still allowing a vertical scroll as a safety
+   valve if a cabinet is slightly taller than the viewport (so controls are
+   never clipped out of reach). The menu keeps normal behaviour when no game
+   is open. */
+.playing-lock {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Game canvases never use swipe gestures, so prevent a drag on the play
+   area from scrolling the page or triggering zoom. */
+canvas {
+  touch-action: none;
 }
 
 /* Custom Scrollbar */

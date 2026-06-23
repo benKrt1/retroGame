@@ -7,7 +7,10 @@
   border-radius: 12px;
   padding: 24px;
   width: 100%;
-  max-width: min(96vw, max(75vw, 420px), calc((100vh - 300px) * 16 / 9 + 68px));
+  /* dvh tracks the mobile URL bar so the cabinet never overflows under it.
+     --chrome-h reserves room for the header + controls; raised on phones. */
+  --chrome-h: 300px;
+  max-width: min(96vw, max(75vw, 420px), calc((100dvh - var(--chrome-h)) * 16 / 9 + 68px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -225,17 +228,35 @@
   border: 2px solid var(--border-color);
   color: var(--text-primary);
   font-family: var(--font-press-start-2p), monospace;
-  font-size: 11px;
-  height: 46px;
-  width: 46px;
+  font-size: 12px;
+  height: 52px;
+  width: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   user-select: none;
   touch-action: none;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.1s ease;
   border-radius: 4px;
+}
+
+/* Prompt to rotate — this wide game is cramped in portrait. Phone only. */
+.rotateHint {
+  display: none;
+  width: 100%;
+  text-align: center;
+  font-size: 8px;
+  color: var(--accent-yellow);
+  letter-spacing: 1px;
+  border: 1px dashed var(--accent-yellow);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+@media (max-width: 767px) {
+  .rotateHint { display: block; }
 }
 
 .touchBtn:active {
@@ -309,4 +330,75 @@
   border-top: 2px solid var(--border-color);
   padding-top: 10px;
   width: 100%;
+}
+
+/* Phone portrait — tighten the chrome so the whole cabinet fits without
+   scrolling. */
+@media (max-width: 767px) {
+  .arcadeCabinet {
+    --chrome-h: 340px;
+    padding: 14px;
+  }
+  .cabinetControls { gap: 10px; }
+}
+
+/* Phone landscape — the ideal orientation for this wide game. Console-style
+   flank: direction pad left, attack buttons right, system buttons top-right.
+   Re-shows the controls the desktop rule hides. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .arcadeCabinet {
+    max-width: none;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    grid-template-areas:
+      "head head sys"
+      "left screen right";
+    align-items: center;
+    gap: 6px 10px;
+    padding: 6px;
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(6px, env(safe-area-inset-right));
+  }
+  .arcadeHeader {
+    grid-area: head;
+    margin-bottom: 0;
+    padding-bottom: 6px;
+  }
+  .screenWrapper {
+    grid-area: screen;
+    margin-bottom: 0;
+    max-height: 92dvh;
+  }
+  .canvas {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 86dvh;
+  }
+  .cabinetControls { display: contents; }
+  .btnGroup {
+    grid-area: sys;
+    flex-direction: column;
+    width: auto;
+    gap: 6px;
+  }
+  .btn {
+    max-width: none;
+    padding: 6px;
+    font-size: 7px;
+  }
+  .touchControls { display: contents; }
+  .touchPadLeft {
+    grid-area: left;
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 8px;
+  }
+  .touchPadRight {
+    grid-area: right;
+    flex-direction: column;
+  }
+  .settingsRow,
+  .instructions { display: none; }
 }
