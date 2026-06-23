@@ -6,7 +6,7 @@
   border-radius: 12px;
   padding: 24px;
   width: 100%;
-  max-width: 440px;
+  max-width: min(94vw, 800px, calc((100vh - 310px) * 19 / 21 + 68px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -87,7 +87,7 @@
 
 .canvas {
   width: 100%;
-  max-width: 380px;
+  max-width: 100%;
   height: auto;
   aspect-ratio: 19 / 21;
   background-color: #020205;
