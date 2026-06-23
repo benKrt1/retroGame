@@ -1,6 +1,6 @@
 # 🕹️ RETRO CADE
 
-A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring four hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack and a CRT-styled cabinet UI — no game frameworks, no audio files. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
+A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring six hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
 
 > `> SELECT A CABINET TO BOOT <`
 
@@ -10,14 +10,18 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring 
 
 | Game | Status | Highlights |
 |------|--------|-----------|
-| 🟡 **Pac-Man** | ✅ Playable | Classic maze, dots & power pellets, four ghosts with scatter/chase modes, intro theme |
+| 🟡 **Pac-Man** | ✅ Playable | Classic maze, dots & power pellets, four ghosts with scatter/chase modes, intro theme; rounded neon-glow maze walls |
 | 👾 **Space Invaders** | ✅ Playable | Marching invader grid that speeds up, destructible shields, UFO bonus, waves, high score, the iconic 4-note march beat |
-| 🧱 **Tetris** | ✅ Playable | 7-bag randomizer, hold piece, ghost piece, next-queue preview, wall kicks, soft/hard drop, levels & line-clear scoring, looping Korobeiniki theme |
-| 🐍 **Snake** | ✅ Playable | Grid-based snake, apples, progressive speed-up, high score, smooth tween rendering |
+| 🧱 **Tetris** | ✅ Playable | 7-bag randomizer, hold piece, ghost piece, next-queue preview, wall kicks, soft/hard drop, levels & line-clear scoring, 3D beveled blocks, looping Korobeiniki theme |
+| 🐍 **Snake** | ✅ Playable | Grid-based snake rendered as a connected body with a flicking tongue, apple food, progressive speed-up, high score |
+| 🚀 **Asteroids** | ✅ Playable | Vector ship with thrust/rotation physics & screen-wrap, splitting asteroids, escalating waves, particle explosions and a twinkling starfield |
+| 🥊 **KNOCKOUT KINGS** | ✅ Playable | 2D fighter — 1P-vs-CPU or local 2P, best-of-3 rounds, move/jump/crouch/block/punch/kick, neon humanoid fighters |
+
+All games share a neon visual language: `shadowBlur` glow, particle bursts, screen shake, floating score popups and CRT scanlines.
 
 ## 🤖 ARCADE ORACLE (Generative AI)
 
-A fifth cabinet: a retro CRT chat terminal where an 8-bit AI game master answers questions and gives strategies, hints and trivia for every game.
+An extra cabinet: a retro CRT chat terminal where an 8-bit AI game master answers questions and gives strategies, hints and trivia for every game.
 
 - The browser calls an internal server route (`/api/oracle`); the route calls the **Groq API** (OpenAI-compatible).
 - The API key is read from an environment variable **server-side only** — it never reaches the browser.
@@ -34,7 +38,7 @@ Open [http://localhost:3000](http://localhost:3000) and click a cabinet to boot 
 
 ### Enabling the ARCADE ORACLE locally
 
-Copy `.env.example` to `.env.local` and fill in your AWS Bedrock API key (the games work without it; only the Oracle needs it):
+Copy `.env.example` to `.env.local` and fill in your Groq API key (the games work without it; only the Oracle needs it):
 
 ```bash
 GROQ_API_KEY=your-groq-api-key
@@ -62,6 +66,10 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 **Snake** — Arrow keys / `WASD` to steer, `Space` to pause.
 
+**Asteroids** — `←` `→` / `A` `D` rotate, `↑` / `W` thrust, `Space` to fire, `P` to pause.
+
+**KNOCKOUT KINGS** — Player 1: `A` `D` move, `W` jump, `S` crouch, `F` punch, `G` kick, `H` block. Player 2 (in 2P): `←` `→` move, `↑` jump, `↓` crouch, `K` punch, `L` kick, `;` block.
+
 On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles, and there's a global light/dark theme switch.
 
 ## 🏗️ Architecture
@@ -85,7 +93,9 @@ src/app/
 │   └── sound-synth.ts        # Web Audio chiptune synthesizer
 ├── space-invaders/
 ├── tetris/
-└── snake/                    # (each mirrors the pacman/ layout)
+├── snake/
+├── asteroids/
+└── fighting/                 # KNOCKOUT KINGS (each mirrors the pacman/ layout)
 ```
 
 **Engine** (`*-game.ts`) — a plain TypeScript class with a uniform API:
