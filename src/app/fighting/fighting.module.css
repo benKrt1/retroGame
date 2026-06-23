@@ -7,7 +7,7 @@
   border-radius: 12px;
   padding: 24px;
   width: 100%;
-  max-width: min(96vw, 1100px, calc((100vh - 300px) * 16 / 9 + 68px));
+  max-width: min(96vw, max(75vw, 420px), calc((100vh - 300px) * 16 / 9 + 68px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
