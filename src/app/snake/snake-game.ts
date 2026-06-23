@@ -260,50 +260,18 @@ export class SnakeEngine {
       ctx.stroke();
     }
 
-    // Apple – pulsing neon red square
+    // Apple food
     const pulse = 0.75 + 0.25 * Math.sin(performance.now() / 200);
-    ctx.fillStyle = `rgba(255,61,0,${pulse})`;
-    ctx.shadowColor = '#ff3d00';
-    ctx.shadowBlur = 8;
     const ap = this.apple;
-    ctx.fillRect(
-      ap.x * tileW + 3,
-      ap.y * tileH + 3,
-      tileW - 6,
-      tileH - 6,
+    this.drawApple(
+      ap.x * tileW + tileW / 2,
+      ap.y * tileH + tileH / 2,
+      Math.min(tileW, tileH) * 0.42,
+      pulse,
     );
-    ctx.shadowBlur = 0;
 
-    // Snake body
-    this.snake.forEach((seg, i) => {
-      const isHead = i === 0;
-      const t = 1 - i / this.snake.length; // brightness gradient
-
-      if (isHead) {
-        ctx.fillStyle = '#39ff14';
-        ctx.shadowColor = '#39ff14';
-        ctx.shadowBlur = 10;
-      } else {
-        const g = Math.round(160 + t * 80);
-        ctx.fillStyle = `rgb(0,${g},0)`;
-        ctx.shadowBlur = 0;
-      }
-
-      const pad = isHead ? 1 : 2;
-      ctx.fillRect(
-        seg.x * tileW + pad,
-        seg.y * tileH + pad,
-        tileW - pad * 2,
-        tileH - pad * 2,
-      );
-
-      // Head eyes
-      if (isHead) {
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#000';
-        this.drawEyes(seg);
-      }
-    });
+    // Snake – connected organic body
+    this.drawSnake();
     ctx.shadowBlur = 0;
 
     // Overlays
@@ -314,6 +282,163 @@ export class SnakeEngine {
     } else if (this.state === 'GAMEOVER') {
       this.drawOverlay('GAME OVER', '#ff3d00');
     }
+  }
+
+  // Draw an apple at canvas coords (cx, cy) with body radius r.
+  private drawApple(cx: number, cy: number, r: number, pulse: number) {
+    const { ctx } = this;
+
+    // Soft red glow.
+    ctx.shadowColor = '#ff3d00';
+    ctx.shadowBlur = 8 * pulse;
+
+    // Body: two overlapping lobes give the classic apple silhouette.
+    ctx.fillStyle = '#e8231a';
+    ctx.beginPath();
+    ctx.arc(cx - r * 0.32, cy + r * 0.05, r * 0.75, 0, Math.PI * 2);
+    ctx.arc(cx + r * 0.32, cy + r * 0.05, r * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Lower shading for volume.
+    ctx.fillStyle = 'rgba(140,10,0,0.4)';
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.45, r * 0.62, 0, Math.PI, false);
+    ctx.fill();
+
+    // Upper-left highlight.
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(cx - r * 0.35, cy - r * 0.28, r * 0.2, r * 0.3, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stem.
+    ctx.strokeStyle = '#6b3a1f';
+    ctx.lineWidth = Math.max(1.5, r * 0.16);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.55);
+    ctx.lineTo(cx + r * 0.12, cy - r * 0.98);
+    ctx.stroke();
+
+    // Leaf.
+    ctx.fillStyle = '#39c24b';
+    ctx.beginPath();
+    ctx.ellipse(cx + r * 0.42, cy - r * 0.85, r * 0.3, r * 0.16, -0.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw the snake as one continuous, tapered body with a distinct head.
+  private drawSnake() {
+    const { ctx, tileW, tileH } = this;
+    const n = this.snake.length;
+    if (n === 0) return;
+
+    const baseW = Math.min(tileW, tileH);
+    const cx = (p: Point) => p.x * tileW + tileW / 2;
+    const cy = (p: Point) => p.y * tileH + tileH / 2;
+    // Body width tapers from head (wide) to tail (thin).
+    const widthAt = (i: number) => {
+      const f = n > 1 ? i / (n - 1) : 0;
+      return baseW * (0.7 - 0.36 * f);
+    };
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Pass 1 — dark outline tube (per segment so it tapers smoothly).
+    ctx.strokeStyle = '#0a5c12';
+    for (let i = 0; i < n - 1; i++) {
+      const w = (widthAt(i) + widthAt(i + 1)) / 2;
+      ctx.lineWidth = w + 2;
+      ctx.beginPath();
+      ctx.moveTo(cx(this.snake[i]), cy(this.snake[i]));
+      ctx.lineTo(cx(this.snake[i + 1]), cy(this.snake[i + 1]));
+      ctx.stroke();
+    }
+
+    // Pass 2 — bright body, fading green from head to tail.
+    for (let i = 0; i < n - 1; i++) {
+      const f = i / Math.max(1, n - 1);
+      const rr = Math.round(57 - 37 * f);
+      const gg = Math.round(255 - 105 * f);
+      const bb = Math.round(20 + 10 * f);
+      ctx.strokeStyle = `rgb(${rr},${gg},${bb})`;
+      ctx.lineWidth = (widthAt(i) + widthAt(i + 1)) / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx(this.snake[i]), cy(this.snake[i]));
+      ctx.lineTo(cx(this.snake[i + 1]), cy(this.snake[i + 1]));
+      ctx.stroke();
+    }
+
+    // Pass 3 — subtle scale ticks across the body.
+    ctx.strokeStyle = 'rgba(10,80,18,0.5)';
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < n - 1; i += 2) {
+      const dx = cx(this.snake[i + 1]) - cx(this.snake[i - 1]);
+      const dy = cy(this.snake[i + 1]) - cy(this.snake[i - 1]);
+      const len = Math.hypot(dx, dy) || 1;
+      const px = -dy / len;
+      const py = dx / len;
+      const w = widthAt(i) * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(cx(this.snake[i]) - px * w, cy(this.snake[i]) - py * w);
+      ctx.lineTo(cx(this.snake[i]) + px * w, cy(this.snake[i]) + py * w);
+      ctx.stroke();
+    }
+
+    // Head — brighter green with glow, on top of the body.
+    const head = this.snake[0];
+    const hr = widthAt(0) * 0.62;
+    ctx.fillStyle = '#39ff14';
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(cx(head), cy(head), hr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Flicking forked tongue (only while moving).
+    if (this.state === 'PLAYING') this.drawTongue(head, hr);
+
+    // Eyes on top.
+    this.drawEyes(head);
+  }
+
+  // Forked tongue flicking out of the snake's mouth in the travel direction.
+  private drawTongue(head: Point, hr: number) {
+    const { ctx, tileW, tileH } = this;
+    const cx = head.x * tileW + tileW / 2;
+    const cy = head.y * tileH + tileH / 2;
+    let dx = 0, dy = 0;
+    switch (this.dir) {
+      case 'UP':    dy = -1; break;
+      case 'DOWN':  dy =  1; break;
+      case 'LEFT':  dx = -1; break;
+      case 'RIGHT': dx =  1; break;
+    }
+    const base = Math.min(tileW, tileH);
+    const flick = (Math.sin(performance.now() / 90) + 1) / 2; // 0..1
+    const len = base * (0.3 + flick * 0.4);
+    const sx = cx + dx * hr * 0.8;
+    const sy = cy + dy * hr * 0.8;
+    const ex = cx + dx * (hr * 0.8 + len);
+    const ey = cy + dy * (hr * 0.8 + len);
+    const px = -dy;
+    const py = dx;
+    const fork = base * 0.16;
+
+    ctx.strokeStyle = '#ff3d00';
+    ctx.lineWidth = Math.max(1.5, base * 0.09);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex + px * fork + dx * fork * 0.5, ey + py * fork + dy * fork * 0.5);
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - px * fork + dx * fork * 0.5, ey - py * fork + dy * fork * 0.5);
+    ctx.stroke();
   }
 
   private drawEyes(head: Point) {
