@@ -21,7 +21,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'space-invaders': { title: 'SPACE INVADERS — RETRO CADE', icon: '/favicons/space-invaders.svg' },
   'tetris': { title: 'TETRIS — RETRO CADE', icon: '/favicons/tetris.svg' },
   'snake': { title: 'SNAKE — RETRO CADE', icon: '/favicons/snake.svg' },
-  'fighting': { title: 'PIXEL BRAWL — RETRO CADE', icon: '/favicons/fighting.svg' },
+  'fighting': { title: 'KNOCKOUT KINGS — RETRO CADE', icon: '/favicons/fighting.svg' },
   'asteroids': { title: 'ASTEROIDS — RETRO CADE', icon: '/favicons/asteroids.svg' },
   'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
@@ -196,9 +196,9 @@ export default function Home() {
                 <span className={styles.badge}>READY</span>
               </div>
               <div className={styles.cardBody}>
-                <h3 className={styles.cardTitle}>PIXEL BRAWL</h3>
+                <h3 className={styles.cardTitle}>KNOCKOUT KINGS</h3>
                 <p className={styles.cardDesc}>
-                  TWO BLOCKY NEON BRAWLERS TRADE PUNCHES AND KICKS. FIGHT THE CPU OR A FRIEND IN BEST-OF-3 KNOCKOUT ROUNDS.
+                  TWO NEON FIGHTERS TRADE PUNCHES AND KICKS. FIGHT THE CPU OR A FRIEND IN BEST-OF-3 KNOCKOUT ROUNDS.
                 </p>
               </div>
               <div className={styles.cardFooter}>

@@ -171,7 +171,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
   return (
     <div className={styles.arcadeCabinet}>
       <div className={styles.arcadeHeader}>
-        <h2 className={styles.title}>PIXEL BRAWL</h2>
+        <h2 className={styles.title}>KNOCKOUT KINGS</h2>
 
         {/* HP bars + round info */}
         <div className={styles.hpRow}>
@@ -207,7 +207,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
 
         {showStartOverlay && (
           <div className={styles.startOverlay}>
-            <h3 className={styles.startTitle}>PIXEL BRAWL</h3>
+            <h3 className={styles.startTitle}>KNOCKOUT KINGS</h3>
             <p className={styles.startSub}>SELECT MODE</p>
             <button className={`${styles.modeBtn} pixel-btn pixel-btn-yellow`} onClick={() => startMode('1P')}>
               1P vs CPU

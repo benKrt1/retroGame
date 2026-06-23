@@ -1,5 +1,5 @@
-// PIXEL BRAWL — 2D fighting game engine (TypeScript / Canvas)
-// Two blocky pixel brawlers, best-of-3 rounds, 1P-vs-CPU or local 2P.
+// KNOCKOUT KINGS — 2D fighting game engine (TypeScript / Canvas)
+// Two neon humanoid fighters, best-of-3 rounds, 1P-vs-CPU or local 2P.
 import { FightSoundSynth } from './fighting-synth';
 
 export type FightState =
@@ -630,75 +630,149 @@ export class FightEngine {
     this.drawAnnouncements();
   }
 
+  // A two-segment rounded limb (upper + lower) for arms and legs.
+  private drawLimb(
+    ax: number, ay: number, bx: number, by: number, cx: number, cy: number, width: number,
+  ) {
+    const { ctx } = this;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.lineTo(cx, cy);
+    ctx.stroke();
+  }
+
+  // Draw a humanoid fighter. Everything is posed in local space with the
+  // origin at the top-center of the body box and +x = the facing direction
+  // (mirrored via scale), so attacks reach toward +x.
   private drawFighter(f: Fighter) {
     const { ctx } = this;
     const h = f.crouching ? CROUCH_H : STAND_H;
     const top = f.y - h;
-    const x = f.x;
-    const w = BODY_W;
-    const color = f.flash > 0 ? '#ffffff' : f.color;
+    const cx = f.x + BODY_W / 2;
+    const outfit = f.flash > 0 ? '#ffffff' : f.color;
+    const skin = f.trim;
 
     ctx.save();
+    ctx.translate(cx, top);
+    ctx.scale(f.facing, 1);
     ctx.shadowColor = f.color;
     ctx.shadowBlur = 10;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = outfit;
 
     if (f.action === 'ko') {
-      // Downed: a flat slab on the floor.
-      ctx.fillStyle = color;
-      ctx.fillRect(x - 6, f.y - 16, w + 12, 14);
+      // Lying on the floor, head forward.
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(-12, h - 5);
+      ctx.lineTo(13, h - 5);
+      ctx.stroke();
       ctx.shadowBlur = 0;
-      ctx.fillStyle = '#000';
-      ctx.fillRect(x + 4, f.y - 12, 4, 4);
-      ctx.fillRect(x + 14, f.y - 12, 4, 4);
+      ctx.fillStyle = skin;
+      ctx.beginPath();
+      ctx.arc(17, h - 5, 6, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
       return;
     }
 
-    const headH = 14;
-    const legH = Math.round(h * 0.32);
-    const torsoTop = top + headH;
-    const torsoBottom = f.y - legH;
+    // Idle bob / walk cycle.
+    const t = performance.now() / 1000;
+    const stride = f.action === 'walk' ? Math.sin(t * 12) : 0;
+    const bob = f.action === 'idle' ? Math.sin(t * 3) : 0;
 
-    // Legs.
-    ctx.fillStyle = color;
-    ctx.fillRect(x + 4, torsoBottom, 8, legH);
-    ctx.fillRect(x + w - 12, torsoBottom, 8, legH);
+    const headR = 6.5;
+    const headCY = 8 + bob;
+    const shoulderY = 17 + bob;
+    const hipY = h * 0.52 + bob;
+    const feetY = h;
+    const airborne = !f.onGround || f.action === 'jump';
 
-    // Torso.
-    ctx.fillRect(x + 3, torsoTop, w - 6, torsoBottom - torsoTop);
-
-    // Head.
-    ctx.fillStyle = f.trim;
-    const headX = x + (w - 16) / 2;
-    ctx.fillRect(headX, top, 16, headH);
-    // Eye (facing side).
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#05050b';
-    const eyeX = f.facing === 1 ? headX + 10 : headX + 2;
-    ctx.fillRect(eyeX, top + 5, 4, 4);
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = f.color;
-
-    // Arms / attacking limbs.
-    ctx.fillStyle = color;
-    const shoulderY = torsoTop + 4;
-    if (f.action === 'block') {
-      // Guard arm across the front.
-      const gx = f.facing === 1 ? x + w - 4 : x - 6;
-      ctx.fillStyle = f.trim;
-      ctx.fillRect(gx, shoulderY, 10, 22);
-    } else if (f.action === 'punch') {
-      const armY = top + 10;
-      const ax = f.facing === 1 ? x + w - 4 : x - PUNCH.range + 4;
-      ctx.fillRect(ax, armY, PUNCH.range, 8);
-    } else if (f.action === 'kick') {
-      const ky = top + 26;
-      const kx = f.facing === 1 ? x + w - 4 : x - KICK.range + 4;
-      ctx.fillRect(kx, ky, KICK.range, 10);
+    // ---- Legs ----
+    ctx.lineWidth = 7;
+    const hipDX = 4;
+    if (f.action === 'kick') {
+      // Back leg planted, front leg snapping forward at mid height.
+      this.drawLimb(-hipDX, hipY, -hipDX - 2, (hipY + feetY) / 2, -hipDX - 1, feetY, 7);
+      const footX = 11 + KICK.range * 0.7;
+      this.drawLimb(hipDX, hipY, hipDX + 12, hipY + 3, footX, hipY + 9, 7);
+    } else if (airborne) {
+      // Tucked knees.
+      this.drawLimb(-hipDX, hipY, -hipDX - 4, hipY + 8, -hipDX - 2, feetY - 9, 7);
+      this.drawLimb(hipDX, hipY, hipDX + 6, hipY + 8, hipDX + 4, feetY - 11, 7);
     } else {
-      // Resting arms on each side.
-      ctx.fillRect(x - 2, shoulderY, 5, 18);
-      ctx.fillRect(x + w - 3, shoulderY, 5, 18);
+      // Fighting stance: front foot forward, back foot back (walk swings them).
+      const frontFoot = 8 + stride * 4;
+      const backFoot = -8 - stride * 4;
+      this.drawLimb(hipDX, hipY, hipDX + 3, (hipY + feetY) / 2, frontFoot, feetY, 7);
+      this.drawLimb(-hipDX, hipY, -hipDX - 3, (hipY + feetY) / 2, backFoot, feetY, 7);
+    }
+
+    // ---- Torso (tapered to the waist) ----
+    ctx.fillStyle = outfit;
+    ctx.beginPath();
+    ctx.moveTo(-9, shoulderY);
+    ctx.lineTo(9, shoulderY);
+    ctx.lineTo(5, hipY + 2);
+    ctx.lineTo(-5, hipY + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // ---- Head ----
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+    ctx.fill();
+    // Hair over the top.
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, headCY, headR - 1, Math.PI * 1.08, Math.PI * 1.92, false);
+    ctx.stroke();
+    // Eye, facing forward.
+    ctx.fillStyle = '#05050b';
+    ctx.fillRect(headR - 4, headCY - 1, 3, 3);
+    ctx.shadowColor = f.color;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = outfit;
+
+    // ---- Arms (drawn over the head so a guard sits in front of the face) ----
+    ctx.lineWidth = 5;
+    const shL = -8;
+    const shR = 8;
+    if (f.action === 'block') {
+      this.drawLimb(shR, shoulderY, shR + 6, shoulderY + 2, shR + 3, shoulderY - 8, 5);
+      this.drawLimb(shL, shoulderY, shL + 8, shoulderY + 2, shL + 9, shoulderY - 6, 5);
+    } else if (f.action === 'punch') {
+      const handX = 11 + PUNCH.range * 0.75;
+      this.drawLimb(shR, shoulderY, (shR + handX) / 2, shoulderY + 1, handX, shoulderY + 2, 5);
+      this.drawLimb(shL, shoulderY, shL - 2, shoulderY + 8, shL + 2, shoulderY - 2, 5);
+      ctx.fillStyle = skin;
+      ctx.beginPath();
+      ctx.arc(handX, shoulderY + 2, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (f.action === 'hit') {
+      this.drawLimb(shR, shoulderY, shR - 4, shoulderY + 8, shR - 8, shoulderY + 5, 5);
+      this.drawLimb(shL, shoulderY, shL - 6, shoulderY + 8, shL - 10, shoulderY + 3, 5);
+    } else if (airborne) {
+      this.drawLimb(shR, shoulderY, shR + 6, shoulderY - 6, shR + 8, shoulderY - 14, 5);
+      this.drawLimb(shL, shoulderY, shL - 6, shoulderY - 6, shL - 8, shoulderY - 14, 5);
+    } else {
+      // Guard stance: both fists up near the face.
+      this.drawLimb(shR, shoulderY, shR + 5, shoulderY + 4, shR + 7, shoulderY - 4, 5);
+      this.drawLimb(shL, shoulderY, shL + 3, shoulderY + 6, shL + 6, shoulderY - 2, 5);
+      ctx.fillStyle = skin;
+      ctx.beginPath();
+      ctx.arc(shR + 7, shoulderY - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(shL + 6, shoulderY - 2, 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.restore();
