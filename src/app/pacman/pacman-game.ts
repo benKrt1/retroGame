@@ -71,6 +71,26 @@ interface Ghost {
   scatterTarget: { x: number; y: number };
 }
 
+// --- Visual "juice" entities (rendering only, no gameplay effect) ---
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number; // ms remaining
+  maxLife: number;
+  size: number;
+  color: string;
+}
+
+interface ScorePopup {
+  x: number;
+  y: number;
+  text: string;
+  life: number;
+  maxLife: number;
+}
+
 export class PacmanEngine {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -119,6 +139,10 @@ export class PacmanEngine {
   // Dying animation variables
   private deathFrame = 0;
 
+  // Visual effects (rendering only).
+  private particles: Particle[] = [];
+  private popups: ScorePopup[] = [];
+
   constructor(
     canvas: HTMLCanvasElement, 
     synth: RetroSoundSynth,
@@ -156,7 +180,10 @@ export class PacmanEngine {
       }
     }
     this.dotsRemaining = this.totalDots;
-    
+
+    this.particles = [];
+    this.popups = [];
+
     this.resetPositions();
     this.updateStatus();
   }
@@ -337,11 +364,15 @@ export class PacmanEngine {
       this.animateDeath();
     }
 
+    this.updateEffects(delta);
+
     this.drawMaze();
     if (this.state !== 'DYING') {
       this.drawPacman();
     }
     this.drawGhosts();
+    this.drawParticles();
+    this.drawPopups();
 
     if (this.state === 'START') {
       this.drawOverlay("READY!");
@@ -466,6 +497,7 @@ export class PacmanEngine {
         this.score += 50;
         this.dotsRemaining--;
         this.synth.playEatFruit(); // play power sound
+        this.spawnBurst(this.pacX, this.pacY, 14, ['#ffeb3b', '#ffffff'], 0.5, 2.2, 240, 520);
         this.frightenedTimer = 7000; // 7 seconds
         
         this.ghosts.forEach(ghost => {
@@ -684,12 +716,15 @@ export class PacmanEngine {
           ghost.state = 'EATEN';
           this.score += 200;
           this.synth.playEatGhost();
+          this.spawnBurst(ghost.x, ghost.y, 16, ['#00e5ff', '#ffffff', '#9be8ff'], 0.6, 2.6, 280, 600);
+          this.popups.push({ x: ghost.x, y: ghost.y, text: '+200', life: 800, maxLife: 800 });
           this.updateStatus();
         } else if (ghost.state !== 'EATEN') {
           // Pacman hits an active ghost -> Die!
           this.state = 'DYING';
           this.deathFrame = 0;
           this.synth.playDeath();
+          this.spawnBurst(this.pacX, this.pacY, 26, ['#ffeb3b', '#ff9100', '#ffffff'], 1, 3.6, 500, 1100);
           this.updateStatus();
           break;
         }
@@ -703,38 +738,82 @@ export class PacmanEngine {
   private drawMaze() {
     const rows = this.maze.length;
     const cols = this.maze[0].length;
+    const tw = this.tileWidth;
+    const th = this.tileHeight;
+    const ctx = this.ctx;
 
+    const isWall = (cc: number, rr: number) =>
+      rr >= 0 && rr < rows && cc >= 0 && cc < cols && this.maze[rr][cc] === 1;
+
+    // Walls as connected, rounded neon "pipes": dark body pass then bright core.
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const passes = [
+      { color: '#0a1c66', width: tw * 0.62, glow: 0 },
+      { color: '#3d7bff', width: tw * 0.30, glow: 7 },
+    ];
+    for (const pass of passes) {
+      ctx.strokeStyle = pass.color;
+      ctx.fillStyle = pass.color;
+      ctx.lineWidth = pass.width;
+      ctx.shadowColor = 'rgba(61,123,255,0.6)';
+      ctx.shadowBlur = pass.glow;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (this.maze[r][c] !== 1) continue;
+          const cx = c * tw + tw / 2;
+          const cy = r * th + th / 2;
+          // Connect to right / down wall neighbours (each shared edge once).
+          if (isWall(c + 1, r)) {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + tw, cy);
+            ctx.stroke();
+          }
+          if (isWall(c, r + 1)) {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx, cy + th);
+            ctx.stroke();
+          }
+          // Rounded node so junctions and lone tiles stay solid.
+          ctx.beginPath();
+          ctx.arc(cx, cy, pass.width / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.shadowBlur = 0;
+
+    // Pellets, power pellets, gate.
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const val = this.maze[r][c];
-        const x = c * this.tileWidth;
-        const y = r * this.tileHeight;
-
-        if (val === 1) {
-          // Draw wall (Retro neon blue blocky structure)
-          this.ctx.strokeStyle = '#002288';
-          this.ctx.lineWidth = 2;
-          this.ctx.strokeRect(x + 2, y + 2, this.tileWidth - 4, this.tileHeight - 4);
-          
-          this.ctx.strokeStyle = '#0055ff';
-          this.ctx.lineWidth = 1;
-          this.ctx.strokeRect(x + 4, y + 4, this.tileWidth - 8, this.tileHeight - 8);
-        } else if (val === 2) {
-          // Draw pellet (small square)
-          this.ctx.fillStyle = '#ffeb3b';
-          this.ctx.fillRect(x + 8, y + 8, 4, 4);
+        const x = c * tw;
+        const y = r * th;
+        if (val === 2) {
+          ctx.fillStyle = '#ffeb3b';
+          ctx.shadowColor = 'rgba(255,235,59,0.6)';
+          ctx.shadowBlur = 5;
+          ctx.beginPath();
+          ctx.arc(x + tw / 2, y + th / 2, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
         } else if (val === 3) {
-          // Draw power pellet (flashing circle)
-          if (Math.floor(performance.now() / 250) % 2 === 0) {
-            this.ctx.fillStyle = '#ffeb3b';
-            this.ctx.beginPath();
-            this.ctx.arc(x + 10, y + 10, 6, 0, Math.PI * 2);
-            this.ctx.fill();
-          }
+          const pr = 6 + Math.sin(performance.now() / 200) * 1.2;
+          ctx.fillStyle = '#ffeb3b';
+          ctx.shadowColor = 'rgba(255,235,59,0.9)';
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(x + tw / 2, y + th / 2, pr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
         } else if (val === 5) {
-          // Draw gate
-          this.ctx.fillStyle = '#ff007f';
-          this.ctx.fillRect(x, y + 8, this.tileWidth, 4);
+          ctx.fillStyle = '#ff007f';
+          ctx.shadowColor = 'rgba(255,0,127,0.6)';
+          ctx.shadowBlur = 6;
+          ctx.fillRect(x, y + 8, tw, 4);
+          ctx.shadowBlur = 0;
         }
       }
     }
@@ -758,6 +837,13 @@ export class PacmanEngine {
     this.ctx.arc(0, 0, 9, mouthSize, Math.PI * 2 - mouthSize);
     this.ctx.lineTo(0, 0);
     this.ctx.closePath();
+    this.ctx.fill();
+
+    // Small eye for character.
+    this.ctx.shadowBlur = 0;
+    this.ctx.fillStyle = '#1a1a00';
+    this.ctx.beginPath();
+    this.ctx.arc(1, -4.5, 1.3, 0, Math.PI * 2);
     this.ctx.fill();
 
     this.ctx.restore();
@@ -823,6 +909,13 @@ export class PacmanEngine {
     // Left side
     this.ctx.lineTo(-9, 9);
     this.ctx.closePath();
+    this.ctx.fill();
+
+    // Glossy highlight on the upper-left of the dome.
+    this.ctx.shadowBlur = 0;
+    this.ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    this.ctx.beginPath();
+    this.ctx.ellipse(-3.5, -4, 3, 4.5, -0.4, 0, Math.PI * 2);
     this.ctx.fill();
   }
 
@@ -920,6 +1013,73 @@ export class PacmanEngine {
       }
       this.updateStatus();
     }
+  }
+
+  // ---- Visual effects (rendering only) ----
+
+  private spawnBurst(
+    x: number, y: number, count: number,
+    palette: string[], speedMin: number, speedMax: number,
+    lifeMin: number, lifeMax: number
+  ) {
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const sp = speedMin + Math.random() * (speedMax - speedMin);
+      const life = lifeMin + Math.random() * (lifeMax - lifeMin);
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        life, maxLife: life,
+        size: 1 + Math.random() * 1.8,
+        color: palette[Math.floor(Math.random() * palette.length)],
+      });
+    }
+  }
+
+  private updateEffects(delta: number) {
+    const f = delta / 16.67;
+    for (const p of this.particles) {
+      p.x += p.vx * f;
+      p.y += p.vy * f;
+      p.vx *= Math.pow(0.97, f);
+      p.vy *= Math.pow(0.97, f);
+      p.life -= delta;
+    }
+    this.particles = this.particles.filter((p) => p.life > 0);
+
+    for (const s of this.popups) {
+      s.y -= 0.4 * f;
+      s.life -= delta;
+    }
+    this.popups = this.popups.filter((s) => s.life > 0);
+  }
+
+  private drawParticles() {
+    for (const p of this.particles) {
+      this.ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      this.ctx.fillStyle = p.color;
+      this.ctx.shadowColor = p.color;
+      this.ctx.shadowBlur = 4;
+      this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    this.ctx.globalAlpha = 1;
+    this.ctx.shadowBlur = 0;
+  }
+
+  private drawPopups() {
+    this.ctx.font = '8px "Press Start 2P", monospace';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
+    this.ctx.shadowBlur = 6;
+    for (const s of this.popups) {
+      this.ctx.globalAlpha = Math.max(0, s.life / s.maxLife);
+      this.ctx.fillStyle = '#00e5ff';
+      this.ctx.fillText(s.text, s.x, s.y);
+    }
+    this.ctx.globalAlpha = 1;
+    this.ctx.shadowBlur = 0;
   }
 
   private drawOverlay(text: string) {
