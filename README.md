@@ -55,15 +55,18 @@ Every game keeps a shared **top-10 leaderboard** (KNOCKOUT KINGS uses a derived
 account needed — and a **SCORES** button on each cabinet shows the board anytime.
 
 Scores are stored in **Upstash Redis** (free tier) behind `/api/scores`
-(one sorted set per game). Create a DB at [upstash.com](https://upstash.com) or
-via the Vercel Marketplace and set:
+(one sorted set per game). Easiest setup: add the **Upstash for Redis**
+integration from the Vercel dashboard (**Storage** tab) and connect it to the
+project — it auto-creates the credentials. Pull them locally with:
 
 ```bash
-UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
+vercel env pull .env.local
 ```
 
-Without these the leaderboard simply shows **OFFLINE** and the games still play.
+The API reads `KV_REST_API_URL` / `KV_REST_API_TOKEN` (what the integration
+injects), falling back to `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`
+for a manual upstash.com setup. Without these the leaderboard simply shows
+**OFFLINE** and the games still play.
 
 ### Scripts
 

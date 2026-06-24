@@ -28,10 +28,11 @@ export interface ScoreRow {
 }
 
 // Lazily build the client so a missing config surfaces as a clean 503 rather
-// than crashing the module at import time.
+// than crashing the module at import time. The Vercel + Upstash integration
+// injects KV_REST_API_* names; fall back to the UPSTASH_* names too.
 function getRedis(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return null;
   return new Redis({ url, token });
 }
