@@ -11,11 +11,12 @@ import { AsteroidsComponent } from './asteroids/asteroids-component';
 import { BombermanComponent } from './bomberman/bomberman-component';
 import { BreakoutComponent } from './breakout/breakout-component';
 import { Game2048Component } from './2048/2048-component';
+import { FroggerComponent } from './frogger/frogger-component';
 import { OracleComponent } from './oracle/oracle-component';
 import { MenuLeaderboard } from './leaderboard/menu-leaderboard';
 import { ThemeToggle } from './theme-toggle';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | '2048' | 'oracle' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | '2048' | 'frogger' | 'oracle' | null;
 
 // Tab title + favicon per screen. The menu shows the arcade brand; booting a
 // game swaps both to that game's identity.
@@ -30,6 +31,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'bomberman': { title: 'BOMBERMAN — RETRO CADE', icon: '/favicons/bomberman.svg' },
   'breakout': { title: 'BREAKOUT — RETRO CADE', icon: '/favicons/breakout.svg' },
   '2048': { title: '2048 — RETRO CADE', icon: '/favicons/2048.svg' },
+  'frogger': { title: 'FROGGER — RETRO CADE', icon: '/favicons/frogger.svg' },
   'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
 
@@ -327,6 +329,33 @@ export default function Home() {
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
+
+            {/* Frogger */}
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('frogger')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('frogger');
+                }
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon}>🐸</span>
+                <span className={styles.badge}>READY</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>FROGGER</h3>
+                <p className={styles.cardDesc}>
+                  HOP THE FROG ACROSS A BUSY ROAD AND A FLOWING RIVER — DODGE CARS, RIDE LOGS, AND FILL EVERY HOME BAY.
+                </p>
+              </div>
+              <div className={styles.cardFooter}>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
+              </div>
+            </div>
           </section>
 
           <footer className={styles.footer}>
@@ -365,6 +394,9 @@ export default function Home() {
           )}
           {activeGame === '2048' && (
             <Game2048Component onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'frogger' && (
+            <FroggerComponent onBack={() => setActiveGame(null)} />
           )}
           {activeGame === 'oracle' && (
             <OracleComponent onBack={() => setActiveGame(null)} />

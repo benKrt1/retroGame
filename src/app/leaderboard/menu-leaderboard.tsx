@@ -19,6 +19,7 @@ const GAMES: { id: string; label: string; icon: string }[] = [
   { id: 'bomberman', label: 'BOMBERMAN', icon: '💣' },
   { id: 'breakout', label: 'BREAKOUT', icon: '🧱' },
   { id: '2048', label: '2048', icon: '🔢' },
+  { id: 'frogger', label: 'FROGGER', icon: '🐸' },
 ];
 
 export const MenuLeaderboard: React.FC<MenuLeaderboardProps> = ({ onClose }) => {
