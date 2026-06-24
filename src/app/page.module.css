@@ -68,13 +68,19 @@
   grid-template-columns: repeat(1, 1fr);
   gap: 25px;
   width: 100%;
-  max-width: 900px;
+  max-width: 1040px;
   z-index: 10;
 }
 
 @media (min-width: 640px) {
   .gameGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 920px) {
+  .gameGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
