@@ -1,6 +1,6 @@
 # 🕹️ RETRO CADE
 
-A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring eight hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
+A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring nine hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
 
 > `> SELECT A CABINET TO BOOT <`
 
@@ -18,6 +18,7 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring 
 | 🥊 **KNOCKOUT KINGS** | ✅ Playable | 2D fighter — 1P-vs-CPU or local 2P, best-of-3 rounds, move/jump/crouch/block/punch/kick, neon humanoid fighters |
 | 💣 **Bomberman** | ✅ Playable | Grid maze of pillars & destructible bricks, timed bombs with chain-detonating cross blasts, roaming AI enemies, bomb/range power-ups, escalating stages & lives |
 | 🧱 **Breakout** | ✅ Playable | Bounce a ball off the paddle to smash a wall of neon bricks; paddle-angle aiming, particle bursts, WIDE/MULTI/SLOW power-ups, escalating levels & lives |
+| 🔢 **2048** | ✅ Playable | Slide a 4×4 grid of tiles and merge matching numbers to reach 2048; swipe or keyboard controls, spawn/merge pops, win banner with continue |
 
 All games share a neon visual language: `shadowBlur` glow, particle bursts, screen shake, floating score popups and CRT scanlines.
 
@@ -96,6 +97,8 @@ for a manual upstash.com setup. Without these the leaderboard simply shows
 
 **Breakout** — Drag on screen / `←` `→` / `A` `D` to move the paddle, `Space` to launch the ball, `P` to pause.
 
+**2048** — Swipe on the board or use Arrow keys / `WASD` (or the on-screen D-pad) to slide the tiles.
+
 On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles, and there's a global light/dark theme switch.
 
 ## 🏗️ Architecture
@@ -128,7 +131,8 @@ src/app/
 ├── asteroids/
 ├── fighting/                 # KNOCKOUT KINGS
 ├── bomberman/
-└── breakout/                 # (each mirrors the pacman/ layout)
+├── breakout/
+└── 2048/                     # (each mirrors the pacman/ layout)
 ```
 
 **Engine** (`*-game.ts`) — a plain TypeScript class with a uniform API:

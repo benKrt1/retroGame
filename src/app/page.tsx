@@ -10,10 +10,11 @@ import { FightingComponent } from './fighting/fighting-component';
 import { AsteroidsComponent } from './asteroids/asteroids-component';
 import { BombermanComponent } from './bomberman/bomberman-component';
 import { BreakoutComponent } from './breakout/breakout-component';
+import { Game2048Component } from './2048/2048-component';
 import { OracleComponent } from './oracle/oracle-component';
 import { ThemeToggle } from './theme-toggle';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | 'oracle' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | '2048' | 'oracle' | null;
 
 // Tab title + favicon per screen. The menu shows the arcade brand; booting a
 // game swaps both to that game's identity.
@@ -27,6 +28,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'asteroids': { title: 'ASTEROIDS — RETRO CADE', icon: '/favicons/asteroids.svg' },
   'bomberman': { title: 'BOMBERMAN — RETRO CADE', icon: '/favicons/bomberman.svg' },
   'breakout': { title: 'BREAKOUT — RETRO CADE', icon: '/favicons/breakout.svg' },
+  '2048': { title: '2048 — RETRO CADE', icon: '/favicons/2048.svg' },
   'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
 
@@ -290,6 +292,33 @@ export default function Home() {
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
+
+            {/* 2048 */}
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('2048')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('2048');
+                }
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon}>🔢</span>
+                <span className={styles.badge}>READY</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>2048</h3>
+                <p className={styles.cardDesc}>
+                  SLIDE THE TILES AND MERGE MATCHING NUMBERS — 2+2=4, 4+4=8 — AND PUSH ALL THE WAY TO THE 2048 TILE.
+                </p>
+              </div>
+              <div className={styles.cardFooter}>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
+              </div>
+            </div>
           </section>
 
           <footer className={styles.footer}>
@@ -321,6 +350,9 @@ export default function Home() {
           )}
           {activeGame === 'breakout' && (
             <BreakoutComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === '2048' && (
+            <Game2048Component onBack={() => setActiveGame(null)} />
           )}
           {activeGame === 'oracle' && (
             <OracleComponent onBack={() => setActiveGame(null)} />

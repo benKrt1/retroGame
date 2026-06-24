@@ -1,0 +1,9 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <rect width="32" height="32" rx="6" fill="#050508"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5" fill="none" stroke="#1f1f35" stroke-width="1.5"/>
+  <!-- 2x2 tile grid -->
+  <rect x="6"  y="6"  width="9" height="9" rx="2" fill="#00a8b5"/>
+  <rect x="17" y="6"  width="9" height="9" rx="2" fill="#39c24b"/>
+  <rect x="6"  y="17" width="9" height="9" rx="2" fill="#ff9100"/>
+  <rect x="17" y="17" width="9" height="9" rx="2" fill="#ff3d00"/>
+</svg>
