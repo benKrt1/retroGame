@@ -58,6 +58,7 @@ export class FroggerEngine {
   private hopTo = { x: 0, y: 0 };
   private hopT = 1;          // 1 = settled
   private farthestRow = START_ROW;
+  private frogDir: HopDir = 'UP';
 
   private score = 0;
   private lives = 3;
@@ -108,6 +109,7 @@ export class FroggerEngine {
 
     this.frogCol = col;
     this.frogRow = row;
+    this.frogDir = dir;
     this.hopFrom = { x: this.frogPx, y: this.frogPy };
     this.hopTo = { x: this.cellCx(col), y: this.cellCy(row) };
     this.hopT = 0;
@@ -334,95 +336,311 @@ export class FroggerEngine {
     const oy = this.offsetY();
     ctx.clearRect(0, 0, this.W, this.H);
 
-    // Row backgrounds.
+    // Row backgrounds (textured per type).
     for (let r = 0; r < ROWS; r++) {
-      let color = '#0e2a14'; // grass
-      if (r === GOAL_ROW) color = '#0a1f12';
-      else if (RIVER_ROWS.includes(r)) color = '#05223a';
-      else if (ROAD_ROWS.includes(r)) color = '#15151c';
-      ctx.fillStyle = color;
-      ctx.fillRect(ox, oy + r * tile, tile * COLS, tile);
+      const y = oy + r * tile;
+      if (r === GOAL_ROW) this.drawGrassRow(y, true);
+      else if (RIVER_ROWS.includes(r)) this.drawWaterRow(y);
+      else if (ROAD_ROWS.includes(r)) this.drawRoadRow(y, r);
+      else this.drawGrassRow(y, false);
     }
 
-    // Goal bays.
-    ctx.fillStyle = '#0a3a1a';
-    ctx.fillRect(ox, oy, tile * COLS, tile);
+    // Goal bays as glowing lily pads (filled ones show a happy frog).
     BAY_COLS.forEach((c, i) => {
-      const x = this.cellCx(c);
-      ctx.fillStyle = this.bays[i] ? '#39ff14' : 'rgba(57,255,20,0.18)';
-      ctx.shadowColor = '#39ff14';
-      ctx.shadowBlur = this.bays[i] ? 8 : 0;
-      this.roundRect(x - tile * 0.42, oy + tile * 0.1, tile * 0.84, tile * 0.8, 5);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      if (this.bays[i]) this.drawFrogAt(x, oy + tile / 2, '#0a3a1a');
+      this.drawLilyPad(this.cellCx(c), oy + tile / 2, this.bays[i]);
     });
 
     // Lane traffic.
     for (const lane of this.lanes) {
       const y = oy + lane.row * tile;
+      const riverIdx = RIVER_ROWS.indexOf(lane.row);
       for (const it of lane.items) {
         if (lane.type === 'car') {
-          ctx.fillStyle = lane.dir > 0 ? '#ff3d00' : '#00e5ff';
-          ctx.shadowColor = ctx.fillStyle as string;
-          ctx.shadowBlur = 8;
-          this.roundRect(it.x, y + tile * 0.15, it.len, tile * 0.7, 5);
-          ctx.fill();
-          ctx.shadowBlur = 0;
+          this.drawCar(it.x, y, it.len, lane.dir, lane.row);
+        } else if (riverIdx % 2 === 1) {
+          this.drawTurtles(it.x, y, it.len, lane.dir);
         } else {
-          // Log.
-          ctx.fillStyle = '#7a4a1e';
-          this.roundRect(it.x, y + tile * 0.2, it.len, tile * 0.6, 6);
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
+          this.drawLog(it.x, y, it.len);
         }
       }
     }
 
-    // Frog.
-    this.drawFrogAt(this.frogPx, this.frogPy, '#39ff14');
+    // Frog (faces its last hop direction; squashes mid-hop).
+    const squash = this.hopT < 1 ? 1 + 0.22 * Math.sin(this.hopT * Math.PI) : 1;
+    this.drawFrogAt(this.frogPx, this.frogPy, this.frogDir, '#0a2a10', squash);
 
-    // Timer bar.
-    const tw = (tile * COLS) * Math.max(0, this.timer / LIFE_TIME);
-    ctx.fillStyle = this.timer < 6 ? '#ff3d00' : '#39ff14';
-    ctx.fillRect(ox, oy + ROWS * tile - 3, tw, 3);
+    // Timer bar (rounded, colour shifts as it drains).
+    const full = tile * COLS;
+    const tw = full * Math.max(0, this.timer / LIFE_TIME);
+    const by = oy + ROWS * tile - 4;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(ox, by, full, 4);
+    ctx.fillStyle = this.timer < 8 ? '#ff3d00' : this.timer < 16 ? '#ff9100' : '#39ff14';
+    ctx.shadowColor = ctx.fillStyle as string;
+    ctx.shadowBlur = 6;
+    ctx.fillRect(ox, by, tw, 4);
+    ctx.shadowBlur = 0;
 
     if (this.state === 'IDLE') this.drawOverlay('PRESS PLAY', '#39ff14');
     else if (this.state === 'PAUSED') this.drawOverlay('PAUSED', '#00e5ff');
     else if (this.state === 'GAMEOVER') this.drawOverlay('GAME OVER', '#ff3d00');
   }
 
-  private drawFrogAt(cx: number, cy: number, eyeBg: string) {
+  // ─── Scenery & sprite drawing ──────────────────────────────────────────────
+
+  private drawGrassRow(y: number, lush: boolean) {
     const { ctx, tile } = this;
-    const r = tile * 0.34;
-    ctx.fillStyle = '#39ff14';
-    ctx.shadowColor = '#39ff14';
-    ctx.shadowBlur = 8;
-    // Body.
+    const ox = this.offsetX();
+    const w = tile * COLS;
+    const g = ctx.createLinearGradient(0, y, 0, y + tile);
+    g.addColorStop(0, lush ? '#1c5c2c' : '#143f1d');
+    g.addColorStop(1, lush ? '#123f1e' : '#0d2e14');
+    ctx.fillStyle = g;
+    ctx.fillRect(ox, y, w, tile);
+    // Static tufts (deterministic so they don't flicker).
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    for (let c = 0; c < COLS; c++) {
+      const tx = ox + c * tile + ((c * 13) % tile);
+      ctx.fillRect(tx, y + ((c * 7) % (tile - 4)) + 2, 3, 2);
+    }
+  }
+
+  private drawWaterRow(y: number) {
+    const { ctx, tile } = this;
+    const ox = this.offsetX();
+    const w = tile * COLS;
+    const g = ctx.createLinearGradient(0, y, 0, y + tile);
+    g.addColorStop(0, '#06375a');
+    g.addColorStop(1, '#04223a');
+    ctx.fillStyle = g;
+    ctx.fillRect(ox, y, w, tile);
+    // Animated shimmer lines.
+    const now = performance.now() / 1000;
+    ctx.strokeStyle = 'rgba(120,200,255,0.13)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const yy = y + tile * (0.28 + i * 0.24);
+      ctx.beginPath();
+      for (let x = ox; x <= ox + w; x += 6) {
+        const off = Math.sin(x * 0.05 + now * 1.6 + i) * 2;
+        if (x === ox) ctx.moveTo(x, yy + off);
+        else ctx.lineTo(x, yy + off);
+      }
+      ctx.stroke();
+    }
+  }
+
+  private drawRoadRow(y: number, row: number) {
+    const { ctx, tile } = this;
+    const ox = this.offsetX();
+    const w = tile * COLS;
+    ctx.fillStyle = row % 2 === 0 ? '#16161e' : '#1b1b24';
+    ctx.fillRect(ox, y, w, tile);
+    // Dashed lane divider along the top edge.
+    ctx.strokeStyle = 'rgba(255,235,59,0.22)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 8]);
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.moveTo(ox, y + 1);
+    ctx.lineTo(ox + w, y + 1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  private drawLilyPad(cx: number, cy: number, filled: boolean) {
+    const { ctx, tile } = this;
+    const r = tile * 0.42;
+    // Pad.
+    ctx.fillStyle = filled ? 'rgba(57,255,20,0.25)' : 'rgba(57,255,20,0.12)';
+    ctx.strokeStyle = '#39ff14';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = filled ? 10 : 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0.5, Math.PI * 2 + 0.2); // notched pad
+    ctx.lineTo(cx, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    if (filled) this.drawFrogAt(cx, cy, 'UP', '#0a2a10', 0.85);
+  }
+
+  private drawCar(x: number, y: number, len: number, dir: number, row: number) {
+    const { ctx, tile } = this;
+    const palette = ['#ff3d00', '#00e5ff', '#ffeb3b', '#ff007f'];
+    const color = palette[row % palette.length];
+    const top = y + tile * 0.2;
+    const h = tile * 0.6;
+    // Shadow.
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    this.roundRect(x + 2, top + h - 2, len, 5, 3);
+    ctx.fill();
+    // Body.
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    this.roundRect(x, top, len, h, 6);
     ctx.fill();
     ctx.shadowBlur = 0;
-    // Legs.
-    ctx.fillStyle = '#2bbf10';
-    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy]) => {
+    // Cabin / windscreen.
+    ctx.fillStyle = 'rgba(220,245,255,0.85)';
+    this.roundRect(x + len * 0.22, top + h * 0.16, len * 0.56, h * 0.4, 3);
+    ctx.fill();
+    // Wheels.
+    ctx.fillStyle = '#0a0a0e';
+    ctx.beginPath();
+    ctx.arc(x + len * 0.24, top + h, h * 0.2, 0, Math.PI * 2);
+    ctx.arc(x + len * 0.76, top + h, h * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Headlights at the leading edge.
+    ctx.fillStyle = '#fff7c0';
+    ctx.shadowColor = '#fff7c0';
+    ctx.shadowBlur = 6;
+    const hx = dir > 0 ? x + len - 3 : x + 3;
+    ctx.beginPath();
+    ctx.arc(hx, top + h * 0.35, 2, 0, Math.PI * 2);
+    ctx.arc(hx, top + h * 0.7, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  private drawLog(x: number, y: number, len: number) {
+    const { ctx, tile } = this;
+    const top = y + tile * 0.22;
+    const h = tile * 0.56;
+    ctx.fillStyle = '#6b431c';
+    this.roundRect(x, top, len, h, h / 2);
+    ctx.fill();
+    // Top highlight.
+    ctx.fillStyle = 'rgba(180,120,60,0.4)';
+    this.roundRect(x + 4, top + 3, len - 8, h * 0.24, h * 0.1);
+    ctx.fill();
+    // Bark grain.
+    ctx.strokeStyle = 'rgba(50,30,12,0.5)';
+    ctx.lineWidth = 1;
+    for (let gx = x + 10; gx < x + len - 6; gx += 11) {
       ctx.beginPath();
-      ctx.ellipse(cx + sx * r * 0.7, cy + sy * r * 0.7, r * 0.28, r * 0.18, sx * sy * 0.6, 0, Math.PI * 2);
+      ctx.moveTo(gx, top + 4);
+      ctx.lineTo(gx, top + h - 4);
+      ctx.stroke();
+    }
+    // End rings.
+    ctx.fillStyle = '#8a5a2a';
+    ctx.beginPath();
+    ctx.ellipse(x + len - 4, top + h / 2, 4, h / 2 - 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(50,30,12,0.6)';
+    ctx.beginPath();
+    ctx.ellipse(x + len - 4, top + h / 2, 2, h / 2 * 0.55, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  private drawTurtles(x: number, y: number, len: number, dir: number) {
+    const { ctx, tile } = this;
+    const n = Math.max(1, Math.round(len / tile));
+    const tw = len / n;
+    for (let i = 0; i < n; i++) {
+      const cx = x + tw * (i + 0.5);
+      const cy = y + tile / 2;
+      const bob = Math.sin(performance.now() / 320 + i) * 1.6;
+      const r = tile * 0.3;
+      // Shell.
+      ctx.fillStyle = '#1f8f4a';
+      ctx.shadowColor = '#39ff14';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy + bob, r, Math.PI, 0);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#155f33';
+      ctx.fillRect(cx - r, cy + bob, r * 2, 2);
+      // Shell ridges.
+      ctx.strokeStyle = 'rgba(10,40,20,0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + bob - r * 0.9);
+      ctx.lineTo(cx, cy + bob);
+      ctx.moveTo(cx - r * 0.5, cy + bob - r * 0.5);
+      ctx.lineTo(cx - r * 0.4, cy + bob);
+      ctx.moveTo(cx + r * 0.5, cy + bob - r * 0.5);
+      ctx.lineTo(cx + r * 0.4, cy + bob);
+      ctx.stroke();
+      // Head.
+      ctx.fillStyle = '#2bbf10';
+      ctx.beginPath();
+      ctx.arc(cx + (dir > 0 ? r * 0.95 : -r * 0.95), cy + bob - 1, r * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private drawFrogAt(cx: number, cy: number, dir: HopDir, pupil: string, scale: number) {
+    const { ctx, tile } = this;
+    const r = tile * 0.32 * scale;
+    const ang = dir === 'RIGHT' ? Math.PI / 2 : dir === 'DOWN' ? Math.PI : dir === 'LEFT' ? -Math.PI / 2 : 0;
+    ctx.save();
+    ctx.translate(cx, cy);
+    // Soft ground/water shadow (unrotated).
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(0, r * 0.7, r * 0.9, r * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.rotate(ang);
+
+    // Back legs (splayed).
+    ctx.fillStyle = '#2bbf10';
+    [-1, 1].forEach((s) => {
+      ctx.beginPath();
+      ctx.ellipse(s * r * 0.7, r * 0.5, r * 0.3, r * 0.5, s * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(s * r * 0.95, r * 0.92, r * 0.24, r * 0.12, 0, 0, Math.PI * 2);
       ctx.fill();
     });
-    // Eyes.
-    ctx.fillStyle = '#ffffff';
+    // Front legs.
+    [-1, 1].forEach((s) => {
+      ctx.beginPath();
+      ctx.ellipse(s * r * 0.45, -r * 0.55, r * 0.14, r * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Body (gradient for volume).
+    const g = ctx.createRadialGradient(0, -r * 0.25, r * 0.2, 0, 0, r);
+    g.addColorStop(0, '#8dff66');
+    g.addColorStop(1, '#1f9e2f');
+    ctx.fillStyle = g;
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.arc(cx - r * 0.35, cy - r * 0.45, r * 0.22, 0, Math.PI * 2);
-    ctx.arc(cx + r * 0.35, cy - r * 0.45, r * 0.22, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, r * 0.92, r, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = eyeBg === '#39ff14' ? '#0a2a10' : '#000000';
+    ctx.shadowBlur = 0;
+    // Belly highlight.
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
     ctx.beginPath();
-    ctx.arc(cx - r * 0.35, cy - r * 0.45, r * 0.1, 0, Math.PI * 2);
-    ctx.arc(cx + r * 0.35, cy - r * 0.45, r * 0.1, 0, Math.PI * 2);
+    ctx.ellipse(0, r * 0.25, r * 0.45, r * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Bulging eyes on top.
+    [-1, 1].forEach((s) => {
+      ctx.fillStyle = '#7dff5a';
+      ctx.beginPath();
+      ctx.arc(s * r * 0.42, -r * 0.72, r * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(s * r * 0.42, -r * 0.74, r * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = pupil;
+      ctx.beginPath();
+      ctx.arc(s * r * 0.42, -r * 0.8, r * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath();
+      ctx.arc(s * r * 0.48, -r * 0.88, r * 0.045, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
   }
 
   private roundRect(x: number, y: number, w: number, h: number, r: number) {
