@@ -9,10 +9,11 @@ import { SnakeComponent } from './snake/snake-component';
 import { FightingComponent } from './fighting/fighting-component';
 import { AsteroidsComponent } from './asteroids/asteroids-component';
 import { BombermanComponent } from './bomberman/bomberman-component';
+import { BreakoutComponent } from './breakout/breakout-component';
 import { OracleComponent } from './oracle/oracle-component';
 import { ThemeToggle } from './theme-toggle';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'oracle' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | 'oracle' | null;
 
 // Tab title + favicon per screen. The menu shows the arcade brand; booting a
 // game swaps both to that game's identity.
@@ -25,6 +26,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'fighting': { title: 'KNOCKOUT KINGS — RETRO CADE', icon: '/favicons/fighting.svg' },
   'asteroids': { title: 'ASTEROIDS — RETRO CADE', icon: '/favicons/asteroids.svg' },
   'bomberman': { title: 'BOMBERMAN — RETRO CADE', icon: '/favicons/bomberman.svg' },
+  'breakout': { title: 'BREAKOUT — RETRO CADE', icon: '/favicons/breakout.svg' },
   'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
 
@@ -261,6 +263,33 @@ export default function Home() {
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
+
+            {/* Breakout */}
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('breakout')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('breakout');
+                }
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon}>🧱</span>
+                <span className={styles.badge}>READY</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>BREAKOUT</h3>
+                <p className={styles.cardDesc}>
+                  BOUNCE THE BALL OFF YOUR PADDLE TO SMASH A WALL OF NEON BRICKS. CATCH POWER-UPS AND CLEAR EVERY LEVEL.
+                </p>
+              </div>
+              <div className={styles.cardFooter}>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
+              </div>
+            </div>
           </section>
 
           <footer className={styles.footer}>
@@ -289,6 +318,9 @@ export default function Home() {
           )}
           {activeGame === 'bomberman' && (
             <BombermanComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'breakout' && (
+            <BreakoutComponent onBack={() => setActiveGame(null)} />
           )}
           {activeGame === 'oracle' && (
             <OracleComponent onBack={() => setActiveGame(null)} />

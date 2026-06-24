@@ -1,0 +1,15 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <rect width="32" height="32" rx="6" fill="#050508"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5" fill="none" stroke="#1f1f35" stroke-width="1.5"/>
+  <!-- brick rows -->
+  <rect x="6"  y="6"  width="6" height="3" fill="#ff3d00"/>
+  <rect x="13" y="6"  width="6" height="3" fill="#ff9100"/>
+  <rect x="20" y="6"  width="6" height="3" fill="#ffeb3b"/>
+  <rect x="6"  y="10" width="6" height="3" fill="#39ff14"/>
+  <rect x="13" y="10" width="6" height="3" fill="#00e5ff"/>
+  <rect x="20" y="10" width="6" height="3" fill="#ff007f"/>
+  <!-- ball -->
+  <circle cx="16" cy="20" r="2.4" fill="#ffffff"/>
+  <!-- paddle -->
+  <rect x="11" y="25" width="10" height="3" rx="1.5" fill="#00e5ff"/>
+</svg>

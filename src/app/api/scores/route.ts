@@ -15,7 +15,7 @@ import { Redis } from '@upstash/redis';
 export const dynamic = 'force-dynamic';
 
 const GAMES = new Set([
-  'pacman', 'space-invaders', 'tetris', 'snake', 'asteroids', 'bomberman', 'fighting',
+  'pacman', 'space-invaders', 'tetris', 'snake', 'asteroids', 'bomberman', 'fighting', 'breakout',
 ]);
 
 const TOP_N = 10;
