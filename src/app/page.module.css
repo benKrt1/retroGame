@@ -9,7 +9,9 @@
   padding-left: max(20px, env(safe-area-inset-left));
   padding-right: max(20px, env(safe-area-inset-right));
   position: relative;
-  overflow: hidden;
+  /* No overflow clip: the body is the scroll container (with overflow-x hidden
+     globally). Clipping here cut off the lower game rows once the grid grew
+     taller than the viewport, leaving them reachable only via the scrollbar. */
 }
 
 .header {
