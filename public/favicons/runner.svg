@@ -1,0 +1,13 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <rect width="32" height="32" rx="6" fill="#050508"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5" fill="none" stroke="#1f1f35" stroke-width="1.5"/>
+  <!-- ground -->
+  <rect x="4" y="24" width="24" height="2" fill="#00e5ff"/>
+  <!-- runner -->
+  <rect x="9" y="11" width="7" height="10" rx="2" fill="#00e5ff"/>
+  <rect x="13" y="13" width="3" height="2" fill="#06222b"/>
+  <rect x="9"  y="21" width="2" height="3" fill="#0090b3"/>
+  <rect x="14" y="21" width="2" height="3" fill="#0090b3"/>
+  <!-- obstacle -->
+  <rect x="22" y="17" width="4" height="7" rx="1" fill="#39ff14"/>
+</svg>

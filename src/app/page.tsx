@@ -12,11 +12,12 @@ import { BombermanComponent } from './bomberman/bomberman-component';
 import { BreakoutComponent } from './breakout/breakout-component';
 import { Game2048Component } from './2048/2048-component';
 import { FroggerComponent } from './frogger/frogger-component';
+import { RunnerComponent } from './runner/runner-component';
 import { OracleComponent } from './oracle/oracle-component';
 import { MenuLeaderboard } from './leaderboard/menu-leaderboard';
 import { ThemeToggle } from './theme-toggle';
 
-type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | '2048' | 'frogger' | 'oracle' | null;
+type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | '2048' | 'frogger' | 'runner' | 'oracle' | null;
 
 // Tab title + favicon per screen. The menu shows the arcade brand; booting a
 // game swaps both to that game's identity.
@@ -32,6 +33,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
   'breakout': { title: 'BREAKOUT — RETRO CADE', icon: '/favicons/breakout.svg' },
   '2048': { title: '2048 — RETRO CADE', icon: '/favicons/2048.svg' },
   'frogger': { title: 'FROGGER — RETRO CADE', icon: '/favicons/frogger.svg' },
+  'runner': { title: 'ENDLESS RUNNER — RETRO CADE', icon: '/favicons/runner.svg' },
   'oracle': { title: 'ARCADE ORACLE — RETRO CADE', icon: '/favicons/menu.svg' },
 };
 
@@ -356,6 +358,33 @@ export default function Home() {
                 <span className={styles.cardAction}>[ BOOT CABINET ]</span>
               </div>
             </div>
+
+            {/* Endless Runner */}
+            <div
+              className={`${styles.cabinetCard} ${styles.activeCard}`}
+              onClick={() => setActiveGame('runner')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveGame('runner');
+                }
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.cardIcon}>🏃</span>
+                <span className={styles.badge}>READY</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>ENDLESS RUNNER</h3>
+                <p className={styles.cardDesc}>
+                  AUTO-RUN THROUGH A NEON CITY AT DAWN AND DUSK — JUMP AND DUCK PAST OBSTACLES AND RUN AS FAR AS YOU CAN.
+                </p>
+              </div>
+              <div className={styles.cardFooter}>
+                <span className={styles.cardAction}>[ BOOT CABINET ]</span>
+              </div>
+            </div>
           </section>
 
           <footer className={styles.footer}>
@@ -397,6 +426,9 @@ export default function Home() {
           )}
           {activeGame === 'frogger' && (
             <FroggerComponent onBack={() => setActiveGame(null)} />
+          )}
+          {activeGame === 'runner' && (
+            <RunnerComponent onBack={() => setActiveGame(null)} />
           )}
           {activeGame === 'oracle' && (
             <OracleComponent onBack={() => setActiveGame(null)} />

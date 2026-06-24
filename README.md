@@ -1,6 +1,6 @@
 # 🕹️ RETRO CADE
 
-A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring ten hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
+A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring eleven hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
 
 > `> SELECT A CABINET TO BOOT <`
 
@@ -20,6 +20,7 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring 
 | 🧱 **Breakout** | ✅ Playable | Bounce a ball off the paddle to smash a wall of neon bricks; paddle-angle aiming, particle bursts, WIDE/MULTI/SLOW power-ups, escalating levels & lives |
 | 🔢 **2048** | ✅ Playable | Slide a 4×4 grid of tiles and merge matching numbers to reach 2048; swipe or keyboard controls, spawn/merge pops, win banner with continue |
 | 🐸 **Frogger** | ✅ Playable | Hop a frog across a busy road and a flowing river — dodge cars, ride logs, fill the home bays; per-life timer, escalating traffic, levels & lives |
+| 🏃 **Endless Runner** | ✅ Playable | One-button auto-runner — jump and duck past obstacles; parallax skyline, day/night cycle, dust & motion-trail particles, ramping speed |
 
 All games share a neon visual language: `shadowBlur` glow, particle bursts, screen shake, floating score popups and CRT scanlines.
 
@@ -102,6 +103,8 @@ for a manual upstash.com setup. Without these the leaderboard simply shows
 
 **Frogger** — Swipe / Arrow keys / `WASD` / on-screen D-pad to hop, `P` to pause.
 
+**Endless Runner** — Tap / `Space` / `↑` to jump, `↓` to duck, `P` to pause.
+
 On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles, and there's a global light/dark theme switch.
 
 ## 🏗️ Architecture
@@ -136,7 +139,8 @@ src/app/
 ├── bomberman/
 ├── breakout/
 ├── 2048/
-└── frogger/                  # (each mirrors the pacman/ layout)
+├── frogger/
+└── runner/                   # (each mirrors the pacman/ layout)
 ```
 
 **Engine** (`*-game.ts`) — a plain TypeScript class with a uniform API:
