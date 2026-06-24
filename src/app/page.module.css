@@ -4,7 +4,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Top-align (not center): once the 7-cabinet grid is taller than the
+     viewport, vertical centering pushed the lower rows out of reach. The mobile
+     query already does this; apply it to every width. */
+  justify-content: flex-start;
   padding: 40px 20px;
   padding-left: max(20px, env(safe-area-inset-left));
   padding-right: max(20px, env(safe-area-inset-right));

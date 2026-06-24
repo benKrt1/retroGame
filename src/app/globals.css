@@ -54,7 +54,13 @@ html, body {
   font-family: var(--font-press-start-2p), monospace;
   min-height: 100vh;
   min-height: 100dvh;
+  /* `overflow-x: hidden` forces overflow-y to compute to `auto`, turning html/
+     body into scroll containers — on macOS that breaks wheel/trackpad scrolling
+     (only the scrollbar works) once the page is tall enough to scroll. `clip`
+     hides horizontal overflow without that side effect, so vertical wheel
+     scrolling stays normal. `hidden` is kept as a fallback for old browsers. */
   overflow-x: hidden;
+  overflow-x: clip;
   line-height: 1.5;
   /* Stop the page from rubber-banding / pull-to-refreshing on mobile. */
   overscroll-behavior: none;
