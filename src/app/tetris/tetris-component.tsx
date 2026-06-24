@@ -5,6 +5,7 @@ import styles from './tetris.module.css';
 import { TetrisEngine, TetrisState } from './tetris-game';
 import { tetrisSynthInstance } from './tetris-synth';
 import { useGameShell } from '../use-game-shell';
+import { HighScoreOverlay } from '../leaderboard/high-score-overlay';
 
 interface TetrisComponentProps {
   onBack?: () => void;
@@ -24,6 +25,7 @@ export const TetrisComponent: React.FC<TetrisComponentProps> = ({ onBack }) => {
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+  const [showScores, setShowScores] = useState(false);
 
   // Shared mobile shell: CRT sync, scroll lock, orientation.
   useGameShell({ scanlinesOn });
@@ -174,6 +176,10 @@ export const TetrisComponent: React.FC<TetrisComponentProps> = ({ onBack }) => {
             RESET
           </button>
 
+          <button className={`${styles.btn} pixel-btn`} onClick={() => setShowScores(true)}>
+            SCORES
+          </button>
+
           {onBack && (
             <button className={`${styles.btn} pixel-btn`} onClick={onBack}>
               MENU
@@ -271,6 +277,13 @@ export const TetrisComponent: React.FC<TetrisComponentProps> = ({ onBack }) => {
           SPACE HARD DROP — C HOLD — P PAUSE
         </div>
       </div>
+
+      <HighScoreOverlay
+        game="tetris"
+        score={score}
+        active={gameState === 'GAMEOVER' || showScores}
+        onClose={() => setShowScores(false)}
+      />
     </div>
   );
 };

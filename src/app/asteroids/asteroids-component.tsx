@@ -5,6 +5,7 @@ import styles from './asteroids.module.css';
 import { AsteroidsEngine, AsteroidsState } from './asteroids-game';
 import { asteroidsSynthInstance } from './asteroids-synth';
 import { useGameShell } from '../use-game-shell';
+import { HighScoreOverlay } from '../leaderboard/high-score-overlay';
 
 interface AsteroidsComponentProps {
   onBack?: () => void;
@@ -24,6 +25,7 @@ export const AsteroidsComponent: React.FC<AsteroidsComponentProps> = ({ onBack }
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+  const [showScores, setShowScores] = useState(false);
 
   // Shared mobile shell: CRT sync, scroll lock, orientation.
   useGameShell({ scanlinesOn });
@@ -184,6 +186,10 @@ export const AsteroidsComponent: React.FC<AsteroidsComponentProps> = ({ onBack }
             RESET
           </button>
 
+          <button className={`${styles.btn} pixel-btn`} onClick={() => setShowScores(true)}>
+            SCORES
+          </button>
+
           {onBack && (
             <button className={`${styles.btn} pixel-btn`} onClick={onBack}>
               MENU
@@ -270,6 +276,13 @@ export const AsteroidsComponent: React.FC<AsteroidsComponentProps> = ({ onBack }
           BLAST THE ROCKS. THEY SPLIT WHEN HIT.
         </div>
       </div>
+
+      <HighScoreOverlay
+        game="asteroids"
+        score={score}
+        active={gameState === 'GAMEOVER' || showScores}
+        onClose={() => setShowScores(false)}
+      />
     </div>
   );
 };

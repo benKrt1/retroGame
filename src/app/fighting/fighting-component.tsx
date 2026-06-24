@@ -13,6 +13,7 @@ import {
 } from './fighting-game';
 import { fightSynth } from './fighting-synth';
 import { useGameShell } from '../use-game-shell';
+import { HighScoreOverlay } from '../leaderboard/high-score-overlay';
 
 interface FightingComponentProps {
   onBack?: () => void;
@@ -37,6 +38,7 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
 
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+  const [showScores, setShowScores] = useState(false);
 
   // Shared mobile shell: CRT sync, scroll lock, orientation (drives the
   // "rotate" hint — this wide 16:9 game plays best in landscape).
@@ -154,6 +156,13 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
   const p1Pct = Math.max(0, (status.p1Hp / MAX_HP) * 100);
   const p2Pct = Math.max(0, (status.p2Hp / MAX_HP) * 100);
 
+  // Leaderboard only applies to a 1P-vs-CPU win. Derive a "KO score" rewarding
+  // flawless, fast, high-HP victories (tunable).
+  const wonVsCpu = status.state === 'MATCH_OVER' && status.mode === '1P' && status.p1Wins >= 2;
+  const koScore = wonVsCpu
+    ? 500 + (status.p2Wins === 0 ? 500 : 0) + Math.max(0, status.p1Hp) + Math.round(status.timeLeft) * 10
+    : 0;
+
   const stateLabel: Record<FightState, string> = {
     START: 'SELECT MODE',
     ROUND_INTRO: `ROUND ${status.round}`,
@@ -227,6 +236,9 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
           )}
           <button className={`${styles.btn} pixel-btn`} onClick={handleReset}>
             RESET
+          </button>
+          <button className={`${styles.btn} pixel-btn`} onClick={() => setShowScores(true)}>
+            SCORES
           </button>
           {onBack && (
             <button className={`${styles.btn} pixel-btn`} onClick={onBack}>
@@ -323,6 +335,14 @@ export const FightingComponent: React.FC<FightingComponentProps> = ({ onBack }) 
           BEST OF 3 ROUNDS — SPACE TO PAUSE
         </div>
       </div>
+
+      <HighScoreOverlay
+        game="fighting"
+        score={koScore}
+        scoreLabel="KO SCORE"
+        active={wonVsCpu || showScores}
+        onClose={() => setShowScores(false)}
+      />
     </div>
   );
 };

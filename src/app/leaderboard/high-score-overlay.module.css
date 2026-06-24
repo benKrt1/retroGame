@@ -1,0 +1,132 @@
+/* Shared high-score overlay — sits inside the (position: relative) cabinet. */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 2, 8, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 320px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 3px solid var(--accent-blue);
+  box-shadow: var(--shadow-blue);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.heading {
+  font-size: 14px;
+  color: var(--accent-blue);
+  text-shadow: var(--shadow-blue);
+  letter-spacing: 2px;
+}
+
+.note {
+  font-size: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.bigScore {
+  font-size: 12px;
+  color: var(--accent-yellow);
+  text-shadow: var(--shadow-yellow);
+  text-align: center;
+}
+
+/* Name entry -------------------------------------------------------------- */
+.entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.nameInput {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--accent-blue);
+  color: var(--text-primary);
+  font-family: var(--font-press-start-2p), monospace;
+  font-size: 14px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  padding: 10px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.nameInput::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* Board ------------------------------------------------------------------- */
+.list {
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.row, .rowHi {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 9px;
+  padding: 5px 6px;
+  border-radius: 3px;
+}
+
+.row { color: var(--text-primary); }
+
+.rowHi {
+  color: var(--bg-primary);
+  background: var(--accent-yellow);
+  box-shadow: var(--shadow-yellow);
+}
+
+.rank { color: var(--text-secondary); }
+.rowHi .rank { color: var(--bg-primary); }
+
+.rowName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowScore { text-align: right; }
+
+.empty {
+  font-size: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.actionBtn {
+  font-size: 9px;
+  padding: 8px 16px;
+  border-width: 2px;
+}

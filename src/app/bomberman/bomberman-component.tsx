@@ -5,6 +5,7 @@ import styles from './bomberman.module.css';
 import { BombermanEngine, Direction, BombermanGameState } from './bomberman-game';
 import { bombermanSynth } from './bomberman-synth';
 import { useGameShell } from '../use-game-shell';
+import { HighScoreOverlay } from '../leaderboard/high-score-overlay';
 
 interface BombermanComponentProps {
   onBack?: () => void;
@@ -22,6 +23,7 @@ export const BombermanComponent: React.FC<BombermanComponentProps> = ({ onBack }
 
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+  const [showScores, setShowScores] = useState(false);
 
   useGameShell({ scanlinesOn });
 
@@ -126,6 +128,7 @@ export const BombermanComponent: React.FC<BombermanComponentProps> = ({ onBack }
             </button>
           )}
           <button className={`${styles.btn} pixel-btn`} onClick={handleResetGame}>RESET</button>
+          <button className={`${styles.btn} pixel-btn`} onClick={() => setShowScores(true)}>SCORES</button>
           {onBack && <button className={`${styles.btn} pixel-btn`} onClick={onBack}>MENU</button>}
         </div>
 
@@ -175,6 +178,13 @@ export const BombermanComponent: React.FC<BombermanComponentProps> = ({ onBack }
           BLAST SOFT BLOCKS · CLEAR ALL ENEMIES TO ADVANCE
         </div>
       </div>
+
+      <HighScoreOverlay
+        game="bomberman"
+        score={score}
+        active={gameState === 'GAMEOVER' || showScores}
+        onClose={() => setShowScores(false)}
+      />
     </div>
   );
 };

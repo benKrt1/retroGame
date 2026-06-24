@@ -5,6 +5,7 @@ import styles from './pacman.module.css';
 import { PacmanEngine, Direction, GameState } from './pacman-game';
 import { synthInstance } from './sound-synth';
 import { useGameShell } from '../use-game-shell';
+import { HighScoreOverlay } from '../leaderboard/high-score-overlay';
 
 interface PacmanComponentProps {
   onBack?: () => void;
@@ -23,6 +24,7 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
   // Settings state
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+  const [showScores, setShowScores] = useState(false);
 
   // Shared mobile shell: CRT sync, scroll lock, orientation.
   useGameShell({ scanlinesOn });
@@ -181,7 +183,11 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
           <button className={`${styles.btn} pixel-btn`} onClick={handleResetGame}>
             RESET
           </button>
-          
+
+          <button className={`${styles.btn} pixel-btn`} onClick={() => setShowScores(true)}>
+            SCORES
+          </button>
+
           {onBack && (
             <button className={`${styles.btn} pixel-btn`} onClick={onBack}>
               MENU
@@ -223,6 +229,13 @@ export const PacmanComponent: React.FC<PacmanComponentProps> = ({ onBack }) => {
           EAT POWER PELLETS TO EAT GHOSTS
         </div>
       </div>
+
+      <HighScoreOverlay
+        game="pacman"
+        score={score}
+        active={gameState === 'GAMEOVER' || showScores}
+        onClose={() => setShowScores(false)}
+      />
     </div>
   );
 };

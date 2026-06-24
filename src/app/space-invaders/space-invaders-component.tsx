@@ -5,6 +5,7 @@ import styles from './space-invaders.module.css';
 import { SpaceInvadersEngine, SpaceInvadersState } from './space-invaders-game';
 import { invaderSynthInstance } from './invader-synth';
 import { useGameShell } from '../use-game-shell';
+import { HighScoreOverlay } from '../leaderboard/high-score-overlay';
 
 interface SpaceInvadersComponentProps {
   onBack?: () => void;
@@ -24,6 +25,7 @@ export const SpaceInvadersComponent: React.FC<SpaceInvadersComponentProps> = ({ 
   // Settings state.
   const [soundOn, setSoundOn] = useState(true);
   const [scanlinesOn, setScanlinesOn] = useState(true);
+  const [showScores, setShowScores] = useState(false);
 
   // Shared mobile shell: CRT sync, scroll lock, orientation.
   useGameShell({ scanlinesOn });
@@ -175,6 +177,10 @@ export const SpaceInvadersComponent: React.FC<SpaceInvadersComponentProps> = ({ 
             RESET
           </button>
 
+          <button className={`${styles.btn} pixel-btn`} onClick={() => setShowScores(true)}>
+            SCORES
+          </button>
+
           {onBack && (
             <button className={`${styles.btn} pixel-btn`} onClick={onBack}>
               MENU
@@ -251,6 +257,13 @@ export const SpaceInvadersComponent: React.FC<SpaceInvadersComponentProps> = ({ 
           DEFEND EARTH. DON&apos;T LET THEM LAND.
         </div>
       </div>
+
+      <HighScoreOverlay
+        game="space-invaders"
+        score={score}
+        active={gameState === 'GAMEOVER' || showScores}
+        onClose={() => setShowScores(false)}
+      />
     </div>
   );
 };

@@ -48,6 +48,23 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 `.env.local` is gitignored — **never commit your key**.
 
+### Global high-score leaderboard
+
+Every game keeps a shared **top-10 leaderboard** (KNOCKOUT KINGS uses a derived
+"KO score" for 1P-vs-CPU wins). On a qualifying game over you type any name — no
+account needed — and a **SCORES** button on each cabinet shows the board anytime.
+
+Scores are stored in **Upstash Redis** (free tier) behind `/api/scores`
+(one sorted set per game). Create a DB at [upstash.com](https://upstash.com) or
+via the Vercel Marketplace and set:
+
+```bash
+UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
+```
+
+Without these the leaderboard simply shows **OFFLINE** and the games still play.
+
 ### Scripts
 
 | Command | Description |
@@ -85,7 +102,12 @@ src/app/
 ├── globals.css              # Shared retro theme, CRT effect, toggle styles
 ├── theme-toggle.tsx         # Light/dark theme switch
 ├── api/
-│   └── oracle/route.ts      # Server route: calls the Groq API (key stays server-side)
+│   ├── oracle/route.ts      # Server route: calls the Groq API (key stays server-side)
+│   └── scores/route.ts      # Server route: per-game leaderboard on Upstash Redis
+├── leaderboard/
+│   ├── scores-client.ts          # fetch/submit helpers shared by every game
+│   ├── high-score-overlay.tsx    # 'use client' name-entry + board overlay
+│   └── high-score-overlay.module.css
 ├── oracle/
 │   ├── oracle-component.tsx # 'use client' CRT chat UI
 │   └── oracle.module.css
