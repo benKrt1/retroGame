@@ -50,6 +50,13 @@
   animation: blink 1.5s step-end infinite;
 }
 
+.leaderboardBtn {
+  margin-top: 18px;
+  font-size: 9px;
+  padding: 9px 18px;
+  border-width: 2px;
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }

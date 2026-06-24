@@ -12,6 +12,7 @@ import { BombermanComponent } from './bomberman/bomberman-component';
 import { BreakoutComponent } from './breakout/breakout-component';
 import { Game2048Component } from './2048/2048-component';
 import { OracleComponent } from './oracle/oracle-component';
+import { MenuLeaderboard } from './leaderboard/menu-leaderboard';
 import { ThemeToggle } from './theme-toggle';
 
 type GameId = 'pacman' | 'space-invaders' | 'tetris' | 'snake' | 'fighting' | 'asteroids' | 'bomberman' | 'breakout' | '2048' | 'oracle' | null;
@@ -34,6 +35,7 @@ const GAME_CHROME: Record<Exclude<GameId, null>, { title: string; icon: string }
 
 export default function Home() {
   const [activeGame, setActiveGame] = useState<GameId>(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Drive the browser tab's title + favicon from the active game.
   useEffect(() => {
@@ -74,6 +76,12 @@ export default function Home() {
           <header className={styles.header}>
             <h1 className={styles.logoText}>RETRO CADE</h1>
             <p className={styles.subtitle}>&gt; SELECT A CABINET TO BOOT &lt;</p>
+            <button
+              className={`${styles.leaderboardBtn} pixel-btn`}
+              onClick={() => setShowLeaderboard(true)}
+            >
+              🏆 HIGH SCORES
+            </button>
           </header>
 
           <section className={styles.gameGrid}>
@@ -324,6 +332,10 @@ export default function Home() {
           <footer className={styles.footer}>
             RETRO CADE SYSTEM V1.0.0 // NATIVE WEB AUDIO & CANVAS GRID ENGINE
           </footer>
+
+          {showLeaderboard && (
+            <MenuLeaderboard onClose={() => setShowLeaderboard(false)} />
+          )}
         </>
       ) : (
         <div className={styles.gameContainer} data-theme="dark">
