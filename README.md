@@ -1,6 +1,6 @@
 # 🕹️ RETRO CADE
 
-A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring six hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
+A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring seven hand-written Canvas games **and a Generative-AI game master**. Each game runs on its own HTML5 Canvas engine with a chiptune **Web Audio** soundtrack, neon-styled graphics (glow, particle effects, screen shake) and a CRT cabinet UI — no game frameworks, no audio files, no sprite assets. The **ARCADE ORACLE** adds an AI chat cabinet powered by the **Groq API** (free tier, open-source Llama models), and the whole app is deployed to **AWS EC2 with Terraform**.
 
 > `> SELECT A CABINET TO BOOT <`
 
@@ -16,6 +16,7 @@ A browser-based retro arcade built with **Next.js** + **TypeScript**, featuring 
 | 🐍 **Snake** | ✅ Playable | Grid-based snake rendered as a connected body with a flicking tongue, apple food, progressive speed-up, high score |
 | 🚀 **Asteroids** | ✅ Playable | Vector ship with thrust/rotation physics & screen-wrap, splitting asteroids, escalating waves, particle explosions and a twinkling starfield |
 | 🥊 **KNOCKOUT KINGS** | ✅ Playable | 2D fighter — 1P-vs-CPU or local 2P, best-of-3 rounds, move/jump/crouch/block/punch/kick, neon humanoid fighters |
+| 💣 **Bomberman** | ✅ Playable | Grid maze of pillars & destructible bricks, timed bombs with chain-detonating cross blasts, roaming AI enemies, bomb/range power-ups, escalating stages & lives |
 
 All games share a neon visual language: `shadowBlur` glow, particle bursts, screen shake, floating score popups and CRT scanlines.
 
@@ -70,6 +71,8 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 **KNOCKOUT KINGS** — Player 1: `A` `D` move, `W` jump, `S` crouch, `F` punch, `G` kick, `H` block. Player 2 (in 2P): `←` `→` move, `↑` jump, `↓` crouch, `K` punch, `L` kick, `;` block.
 
+**Bomberman** — Arrow keys / `WASD` to move, `Space` to drop a bomb, `P` to pause.
+
 On touch devices, every cabinet shows on-screen controls. Each cabinet also has **SOUND** and **CRT SCANLINES** toggles, and there's a global light/dark theme switch.
 
 ## 🏗️ Architecture
@@ -95,7 +98,8 @@ src/app/
 ├── tetris/
 ├── snake/
 ├── asteroids/
-└── fighting/                 # KNOCKOUT KINGS (each mirrors the pacman/ layout)
+├── fighting/                 # KNOCKOUT KINGS
+└── bomberman/                # (each mirrors the pacman/ layout)
 ```
 
 **Engine** (`*-game.ts`) — a plain TypeScript class with a uniform API:

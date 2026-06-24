@@ -1,0 +1,12 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <rect width="32" height="32" rx="6" fill="#050508"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5" fill="none" stroke="#1f1f35" stroke-width="1.5"/>
+  <!-- bomb body -->
+  <circle cx="15" cy="19" r="8" fill="#101018"/>
+  <circle cx="12" cy="16" r="2" fill="#ffffff" opacity="0.4"/>
+  <!-- fuse -->
+  <path d="M19 12 Q23 9 22 5" fill="none" stroke="#5a3a1a" stroke-width="1.5"/>
+  <!-- spark -->
+  <circle cx="22" cy="5" r="2.5" fill="#ff9100"/>
+  <circle cx="22" cy="5" r="1.2" fill="#ffeb3b"/>
+</svg>
