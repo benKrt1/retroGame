@@ -651,22 +651,71 @@ export class BombermanEngine {
     const { ctx, tile } = this;
     const cx = this.cellToPx(b.col);
     const cy = this.cellToPy(b.row);
-    const pulse = 0.85 + 0.15 * Math.sin(performance.now() / 90);
-    const r = tile * 0.34 * pulse;
-    ctx.fillStyle = '#101018';
+    const now = performance.now();
+    // Heartbeat that quickens as the fuse runs down (more frantic near 0).
+    const urgency = 1 - Math.max(0, Math.min(1, b.fuse / BOMB_FUSE));
+    const pulse = 1 + 0.06 * Math.sin(now / (120 - urgency * 90)) * (0.6 + urgency);
+    const r = tile * 0.32 * pulse;
+    const bodyCy = cy + tile * 0.06; // sit the sphere slightly low to leave room for the fuse
+
+    // Round black sphere body (radial gradient for volume).
+    const grad = ctx.createRadialGradient(
+      cx - r * 0.35, bodyCy - r * 0.35, r * 0.15,
+      cx, bodyCy, r,
+    );
+    grad.addColorStop(0, '#3a3a48');
+    grad.addColorStop(0.55, '#14141c');
+    grad.addColorStop(1, '#06060a');
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+
+    // Glossy highlight arc near the top-left.
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.beginPath();
-    ctx.arc(cx - r * 0.3, cy - r * 0.3, r * 0.25, 0, Math.PI * 2);
+    ctx.ellipse(cx - r * 0.35, bodyCy - r * 0.4, r * 0.26, r * 0.16, -0.7, 0, Math.PI * 2);
     ctx.fill();
-    // Fuse spark.
-    ctx.fillStyle = b.fuse % 0.3 < 0.15 ? '#ffeb3b' : '#ff3d00';
+
+    // Fuse cap (the little cylinder on top of the bomb).
+    const capW = r * 0.5;
+    const capH = r * 0.32;
+    const capY = bodyCy - r;
+    ctx.fillStyle = '#4a4a52';
+    ctx.beginPath();
+    ctx.moveTo(cx - capW * 0.5, capY);
+    ctx.lineTo(cx + capW * 0.5, capY);
+    ctx.lineTo(cx + capW * 0.36, capY - capH);
+    ctx.lineTo(cx - capW * 0.36, capY - capH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(cx - capW * 0.36, capY - capH, capW * 0.2, capH);
+
+    // Curved fuse string rising from the cap.
+    const fuseBaseY = capY - capH;
+    const tipX = cx + r * 0.5;
+    const tipY = fuseBaseY - r * 0.7;
+    ctx.strokeStyle = '#7a5a2a';
+    ctx.lineWidth = Math.max(1.5, r * 0.12);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx, fuseBaseY);
+    ctx.quadraticCurveTo(cx - r * 0.3, fuseBaseY - r * 0.6, tipX, tipY);
+    ctx.stroke();
+
+    // Sparking tip — flickers faster as the fuse nears 0.
+    const flick = Math.sin(now / (60 - urgency * 40));
+    const sparkR = r * (0.16 + 0.1 * (flick * 0.5 + 0.5));
     ctx.shadowColor = '#ff9100';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 10 + urgency * 8;
+    ctx.fillStyle = '#ff6a00';
     ctx.beginPath();
-    ctx.arc(cx, cy - r - 2, 2.5, 0, Math.PI * 2);
+    ctx.arc(tipX, tipY, sparkR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffeb3b';
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, sparkR * 0.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
   }
@@ -743,25 +792,103 @@ export class BombermanEngine {
     const p = this.player;
     // Blink while invulnerable.
     if (this.invuln > 0 && Math.floor(performance.now() / 120) % 2 === 0) return;
-    const r = tile * 0.34;
 
-    // Body.
+    const u = tile;                      // size unit
+    const cx = p.px;
+    const walking = p.moving;
+    const phase = walking ? Math.sin(performance.now() / 90) : 0; // limb swing
+    const bob = walking ? -Math.abs(phase) * u * 0.04 : 0;        // tiny vertical bob
+    const cy = p.py + bob;
+
+    // Anchor points (fractions of the tile, centred on cx/cy).
+    const hipY = cy + u * 0.30;
+    const torsoY = cy + u * 0.06;
+    const headY = cy - u * 0.26;
+    const headR = u * 0.20;
+
+    // Legs — swing fore/aft with the walk phase.
+    const legSwing = phase * u * 0.12;
+    ctx.strokeStyle = '#0090b3';
+    ctx.lineWidth = u * 0.12;
+    ctx.lineCap = 'round';
+    [[-1, legSwing], [1, -legSwing]].forEach(([side, sw]) => {
+      ctx.beginPath();
+      ctx.moveTo(cx + side * u * 0.08, hipY);
+      ctx.lineTo(cx + side * u * 0.08 + sw, hipY + u * 0.16);
+      ctx.stroke();
+    });
+
+    // Arms — swing opposite the legs.
+    ctx.strokeStyle = '#00b8d4';
+    ctx.lineWidth = u * 0.1;
+    [[-1, -phase], [1, phase]].forEach(([side, sw]) => {
+      ctx.beginPath();
+      ctx.moveTo(cx + side * u * 0.14, torsoY);
+      ctx.lineTo(cx + side * u * 0.2, torsoY + u * 0.16 + sw * u * 0.08);
+      ctx.stroke();
+    });
+
+    // Torso — glowing cyan capsule.
     ctx.fillStyle = '#00e5ff';
     ctx.shadowColor = '#00e5ff';
     ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.arc(p.px, p.py + r * 0.2, r, 0, Math.PI * 2);
+    this.roundRect(cx - u * 0.15, torsoY - u * 0.04, u * 0.3, u * 0.34, u * 0.12);
     ctx.fill();
     ctx.shadowBlur = 0;
-    // Helmet dome.
-    ctx.fillStyle = '#ffffff';
+    // Chest emblem.
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.beginPath();
-    ctx.arc(p.px, p.py - r * 0.35, r * 0.7, Math.PI, 0);
+    ctx.arc(cx, torsoY + u * 0.12, u * 0.05, 0, Math.PI * 2);
     ctx.fill();
-    // Visor / eyes hint by facing.
-    ctx.fillStyle = '#102030';
-    const fx = p.dir === 'LEFT' ? -1 : p.dir === 'RIGHT' ? 1 : 0;
-    ctx.fillRect(p.px - r * 0.3 + fx * r * 0.15, p.py - r * 0.45, r * 0.6, r * 0.2);
+
+    // Head — peach face + cyan helmet, oriented by facing direction.
+    const dir = p.dir;
+    // Skin head.
+    ctx.fillStyle = '#ffd9b3';
+    ctx.beginPath();
+    ctx.arc(cx, headY, headR, 0, Math.PI * 2);
+    ctx.fill();
+    // Helmet cap (top half) with a white rim.
+    ctx.fillStyle = '#00e5ff';
+    ctx.beginPath();
+    ctx.arc(cx, headY, headR, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx - headR, headY - u * 0.01, headR * 2, u * 0.03);
+
+    // Face per direction.
+    ctx.fillStyle = '#15202b';
+    if (dir === 'UP') {
+      // Back of the head — no eyes, drop the helmet a touch lower.
+      ctx.fillStyle = '#00cbe0';
+      ctx.beginPath();
+      ctx.arc(cx, headY + headR * 0.15, headR * 0.9, Math.PI, 0);
+      ctx.fill();
+    } else if (dir === 'LEFT' || dir === 'RIGHT') {
+      const s = dir === 'LEFT' ? -1 : 1;
+      ctx.beginPath();
+      ctx.arc(cx + s * headR * 0.35, headY + headR * 0.15, headR * 0.16, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // DOWN — two eyes facing us.
+      ctx.beginPath();
+      ctx.arc(cx - headR * 0.35, headY + headR * 0.1, headR * 0.16, 0, Math.PI * 2);
+      ctx.arc(cx + headR * 0.35, headY + headR * 0.1, headR * 0.16, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Trace a rounded rectangle path (caller fills/strokes).
+  private roundRect(x: number, y: number, w: number, h: number, r: number) {
+    const { ctx } = this;
+    const rad = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rad);
+    ctx.arcTo(x + w, y + h, x, y + h, rad);
+    ctx.arcTo(x, y + h, x, y, rad);
+    ctx.arcTo(x, y, x + w, y, rad);
+    ctx.closePath();
   }
 
   private drawOverlay(text: string, color: string) {
