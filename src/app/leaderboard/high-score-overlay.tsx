@@ -33,6 +33,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({
   const [name, setName] = useState('');
   const [highlight, setHighlight] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const wasActive = useRef(false);
 
   // On the rising edge of `active`, load the board and decide entry vs view.
@@ -42,6 +43,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({
       let cancelled = false;
       setPhase('loading');
       setHighlight(null);
+      setDismissed(false);
       fetchScores(game).then((res) => {
         if (cancelled) return;
         if (res.offline) {
@@ -63,7 +65,14 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({
     if (!active) wasActive.current = false;
   }, [active, game, score]);
 
-  if (!active) return null;
+  if (!active || dismissed) return null;
+
+  // CLOSE must hide the overlay even when `active` is still true (e.g. the game
+  // is still in its GAMEOVER state); also clear the mid-game SCORES toggle.
+  const handleClose = () => {
+    setDismissed(true);
+    onClose?.();
+  };
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -95,7 +104,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({
         {phase === 'offline' && (
           <>
             <p className={styles.note}>LEADERBOARD OFFLINE</p>
-            <button className={`${styles.actionBtn} pixel-btn`} onClick={onClose}>CLOSE</button>
+            <button className={`${styles.actionBtn} pixel-btn`} onClick={handleClose}>CLOSE</button>
           </>
         )}
 
@@ -137,7 +146,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({
             {highlight === null && score > 0 && (
               <p className={styles.note}>{scoreLabel}: {Math.floor(score).toLocaleString()} — NOT IN TOP 10</p>
             )}
-            <button className={`${styles.actionBtn} pixel-btn`} onClick={onClose}>CLOSE</button>
+            <button className={`${styles.actionBtn} pixel-btn`} onClick={handleClose}>CLOSE</button>
           </>
         )}
       </div>
